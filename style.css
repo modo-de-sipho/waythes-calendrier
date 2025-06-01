@@ -1,4 +1,4 @@
-/* ---------------- Reset minimal ---------------- */
+/* Reset minimal */
 * {
   margin: 0;
   padding: 0;
@@ -15,10 +15,10 @@ h1 {
   margin-bottom: 10px;
 }
 
-/* --------- Header / User Info ---------- */
+/* Header / User Info */
 header {
   max-width: 900px;
-  margin: 0 auto 20px auto;
+  margin: 0 auto 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -41,12 +41,12 @@ header {
   margin-left: 8px;
 }
 
-/* ----------- Bouton “Login” ------------ */
+/* Bouton "Login" */
 #login-btn {
   background-color: #7289da;
 }
 
-/* ---------------- Calendrier ---------------- */
+/* Calendrier */
 .calendar {
   max-width: 900px;
   margin: 0 auto;
@@ -73,7 +73,7 @@ header {
   margin-bottom: 4px;
 }
 
-/* ------------- Événements ----------------- */
+/* Événements */
 .event {
   background: #7289da;
   padding: 2px 4px;
@@ -100,7 +100,7 @@ header {
   color: #ffd700;
 }
 
-/* --------------- Boutons généraux -------------- */
+/* Boutons généraux */
 button {
   background: #5865f2;
   color: white;
