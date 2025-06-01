@@ -1,37 +1,174 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Calendrier Évènements Discord</title>
-<link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waythes Calendrier - Discord</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <h1>Calendrier Évènements Discord</h1>
-    <button id="login-btn">Se connecter avec Discord</button>
-    <button id="logout-btn" style="display:none;">Déconnexion</button>
-  </header>
+    <!-- Page de connexion -->
+    <div id="loginPage" class="login-page">
+        <div class="login-container">
+            <div class="discord-logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.23A.077.077 0 0 0 8.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 0 0-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 0 0 .031.055 20.03 20.03 0 0 0 5.993 2.98.078.078 0 0 0 .084-.026 13.83 13.83 0 0 0 1.226-1.963.074.074 0 0 0-.041-.104 13.201 13.201 0 0 1-1.872-.878.075.075 0 0 1-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 0 1 .079.009c.12.098.246.195.372.288a.075.075 0 0 1-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 0 0-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 0 0 .084.028 19.963 19.963 0 0 0 6.002-2.981.076.076 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.201 0 2.176 1.068 2.157 2.38 0 1.311-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.2 0 2.176 1.068 2.157 2.38 0 1.311-.956 2.38-2.157 2.38z"/>
+                </svg>
+            </div>
+            
+            <h1>Waythes Calendrier</h1>
+            <p class="subtitle">Connectez-vous avec Discord pour accéder à votre calendrier personnel</p>
+            
+            <a href="http://fnode1.astrast.host:9467/auth/discord" class="discord-btn" id="loginBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.23A.077.077 0 0 0 8.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 0 0-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 0 0 .031.055 20.03 20.03 0 0 0 5.993 2.98.078.078 0 0 0 .084-.026 13.83 13.83 0 0 0 1.226-1.963.074.074 0 0 0-.041-.104 13.201 13.201 0 0 1-1.872-.878.075.075 0 0 1-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 0 1 .079.009c.12.098.246.195.372.288a.075.075 0 0 1-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 0 0-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 0 0 .084.028 19.963 19.963 0 0 0 6.002-2.981.076.076 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.201 0 2.176 1.068 2.157 2.38 0 1.311-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.2 0 2.176 1.068 2.157 2.38 0 1.311-.956 2.38-2.157 2.38z"/>
+                </svg>
+                Se connecter avec Discord
+            </a>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Connexion en cours...</p>
+            </div>
+        </div>
+    </div>
 
-  <main>
-    <div id="user-info" style="display:none;"></div>
+    <!-- Page d'accès refusé -->
+    <div id="accessDeniedPage" class="access-denied-page">
+        <div class="access-denied-container">
+            <div class="warning-icon">⚠️</div>
+            <h1>Accès Refusé</h1>
+            <p id="accessDeniedMessage">Vous n'avez pas les permissions nécessaires pour accéder à cette application.</p>
+            <div class="permission-info">
+                <h3>Votre niveau d'accès :</h3>
+                <div id="userPermissionLevel" class="permission-badge"></div>
+                <p id="permissionDescription"></p>
+            </div>
+            <button class="btn btn-primary" onclick="logout()">Retour à la connexion</button>
+        </div>
+    </div>
 
-    <section id="events-section" style="display:none;">
-      <h2>Évènements</h2>
-      <ul id="events-list"></ul>
-    </section>
+    <!-- Page du calendrier -->
+    <div id="calendarPage" class="calendar-page">
+        <div class="header">
+            <div class="user-info">
+                <img id="userAvatar" class="user-avatar" src="" alt="Avatar">
+                <div class="user-details">
+                    <h2 id="userName">Utilisateur</h2>
+                    <p id="userEmail">email@example.com</p>
+                    <div id="userPermissionBadge" class="permission-badge"></div>
+                </div>
+            </div>
+            <div class="header-controls">
+                <div id="pendingEventsNotification" class="notification-badge" style="display: none;">
+                    <span id="pendingCount">0</span> en attente
+                </div>
+                <button id="adminPanelBtn" class="admin-btn" onclick="openAdminPanel()" style="display: none;">
+                    Administration
+                </button>
+                <button class="logout-btn" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
 
-    <section id="create-event" style="display:none;">
-      <h2>Créer un évènement</h2>
-      <form id="event-form">
-        <input type="text" id="title" placeholder="Titre" required /><br/>
-        <input type="date" id="date" required /><br/>
-        <textarea id="description" placeholder="Description" required></textarea><br/>
-        <button type="submit">Créer</button>
-      </form>
-    </section>
-  </main>
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <div class="month-nav">
+                    <button class="nav-btn" onclick="previousMonth()">‹</button>
+                    <div class="current-month" id="currentMonth">Juin 2025</div>
+                    <button class="nav-btn" onclick="nextMonth()">›</button>
+                </div>
+                <div class="calendar-controls">
+                    <button id="addEventBtn" class="add-event-btn" onclick="openAddEventModal()">
+                        + Ajouter un événement
+                    </button>
+                </div>
+            </div>
 
-<script src="app.js"></script>
+            <div class="calendar-grid">
+                <div class="day-header">Dim</div>
+                <div class="day-header">Lun</div>
+                <div class="day-header">Mar</div>
+                <div class="day-header">Mer</div>
+                <div class="day-header">Jeu</div>
+                <div class="day-header">Ven</div>
+                <div class="day-header">Sam</div>
+                
+                <div id="calendarDays"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour ajouter des événements -->
+    <div id="addEventModal" class="modal">
+        <div class="modal-content">
+            <h3>Ajouter un événement</h3>
+            <div class="form-group">
+                <label for="eventTitle">Titre de l'événement</label>
+                <input type="text" id="eventTitle" placeholder="Nom de l'événement">
+            </div>
+            <div class="form-group">
+                <label for="eventDate">Date</label>
+                <input type="date" id="eventDate">
+            </div>
+            <div class="form-group">
+                <label for="eventTime">Heure</label>
+                <input type="time" id="eventTime">
+            </div>
+            <div class="form-group">
+                <label for="eventCategory">Catégorie</label>
+                <select id="eventCategory">
+                    <option value="personal">Personnel</option>
+                    <option value="work">Travail</option>
+                    <option value="important">Important</option>
+                    <option value="other">Autre</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="eventDescription">Description</label>
+                <textarea id="eventDescription" rows="3" placeholder="Description de l'événement (optionnel)"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeAddEventModal()">Annuler</button>
+                <button class="btn btn-primary" onclick="addEvent()">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel d'administration -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content admin-modal">
+            <h3>Panel d'Administration</h3>
+            
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="showAdminTab('pending')">
+                    Événements en attente (<span id="pendingCountAdmin">0</span>)
+                </button>
+                <button class="tab-btn" onclick="showAdminTab('users')">
+                    Gestion des utilisateurs
+                </button>
+            </div>
+
+            <div id="pendingTab" class="admin-tab active">
+                <div id="pendingEventsList" class="pending-events-list">
+                    <!-- Les événements en attente seront générés ici -->
+                </div>
+            </div>
+
+            <div id="usersTab" class="admin-tab">
+                <div class="users-management">
+                    <h4>Utilisateurs connectés</h4>
+                    <div id="usersList" class="users-list">
+                        <!-- La liste des utilisateurs sera générée ici -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeAdminPanel()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
