@@ -1,58 +1,49 @@
 // script.js
 
 (() => {
-  // ------------------------ Config ------------------------
-  // URL de l’API backend
-  const apiURL = 'https://fnode1.astrast.host:9467';
+  // URL du backend
+  const apiURL = 'http://fnode1.astrast.host:9467';
 
-  // Discord OAuth2 config (Authorization Code Flow)
+  // Config Discord OAuth2 (Authorization Code Flow)
   const CLIENT_ID    = '1378637692169879632';
   const REDIRECT_URI = 'https://modo-de-sipho.github.io/waythes-calendrier/';
-  const SCOPE        = 'identify email';
+  const SCOPE        = 'identify%20email';
 
-  let currentUser = null; 
+  let currentUser = null;
   const today      = new Date();
   let curYear  = today.getFullYear();
   let curMonth = today.getMonth(); // 0..11
 
-  // ---------------- Utilitaires URL ----------------
-
+  // ——————————————————————————————
+  // 1) Initialiser currentUser depuis l’URL ou localStorage
+  // ——————————————————————————————
   function getQueryParams() {
-    const params = {};
-    const queryString = window.location.search.substring(1);
-    if (!queryString) return params;
-    queryString.split('&').forEach(pair => {
-      const [key, value] = pair.split('=');
-      params[decodeURIComponent(key)] = decodeURIComponent(value);
-    });
-    return params;
+    const qs = window.location.search.slice(1);
+    return Object.fromEntries(qs
+      .split('&')
+      .map(s => s.split('=').map(decodeURIComponent))
+      .map(([k,v]) => [k, v])
+    );
   }
-
   function clearQueryString() {
     history.replaceState(null, '', window.location.pathname);
   }
-
-  // ---------------- Initialisation de currentUser depuis l’URL ----------------
-
-  function initUserFromQuery() {
+  function initUserFromQueryOrStorage() {
     const params = getQueryParams();
     if (params.id && params.username && params.role) {
-      // Construire l’objet utilisateur basé sur les paramètres renvoyés par le backend
       currentUser = {
-        id: params.id,
+        id:       params.id,
         username: params.username,
-        avatar: params.avatar || null, // avatar peut être vide
-        role: params.role
+        avatar:   params.avatar || null,
+        role:     params.role
       };
-      // Sauvegarder dans localStorage pour persister entre reloads
-      localStorage.setItem('wd_user', JSON.stringify(currentUser));
+      localStorage.setItem('wc_user', JSON.stringify(currentUser));
       clearQueryString();
     } else {
-      // Sinon, on tente de charger depuis localStorage
-      const raw = localStorage.getItem('wd_user');
-      if (raw) {
+      const stored = localStorage.getItem('wc_user');
+      if (stored) {
         try {
-          currentUser = JSON.parse(raw);
+          currentUser = JSON.parse(stored);
         } catch {
           currentUser = null;
         }
@@ -60,31 +51,48 @@
     }
   }
 
-  // ---------------- Fonction “Se connecter” ----------------
-
-  function loginWithDiscord() {
-    // Construire l’URL Authorization Code Flow
-    const url =
-      `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}` +
-      `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-      `&response_type=code` +
-      `&scope=${encodeURIComponent(SCOPE)}`;
-    window.location.href = url;
+  // ——————————————————————————————
+  // 2) Afficher l’utilisateur / bouton Connexion
+  // ——————————————————————————————
+  function renderUserInfo() {
+    const container = document.getElementById('user-info');
+    if (!currentUser) {
+      // Affiche le bouton “Se connecter avec Discord”
+      container.innerHTML = `
+        <button id="login-btn">Se connecter avec Discord</button>
+      `;
+      document.getElementById('login-btn').onclick = () => {
+        const url =
+          `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}` +
+          `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+          `&response_type=code` +
+          `&scope=${SCOPE}`;
+        window.location.href = url;
+      };
+    } else {
+      // Affiche avatar, pseudo, rôle et bouton déconnexion
+      const avatarUrl = currentUser.avatar
+        ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`
+        : 'https://cdn.discordapp.com/embed/avatars/0.png';
+      container.innerHTML = `
+        <img src="${avatarUrl}" alt="Avatar" />
+        <span><strong>${currentUser.username}</strong></span>
+        <span class="badge">${currentUser.role}</span>
+        <button id="logout-btn">Déconnexion</button>
+      `;
+      document.getElementById('logout-btn').onclick = () => {
+        localStorage.removeItem('wc_user');
+        currentUser = null;
+        renderUserInfo();
+        renderCalendar();
+      };
+    }
   }
 
-  // ---------------- Fonction “Déconnexion” ----------------
-
-  function logout() {
-    localStorage.removeItem('wd_user');
-    currentUser = null;
-    renderUserInfo();
-    renderCalendar();
-  }
-
-  // ---------------- Fonctions appels API ----------------
-
+  // ——————————————————————————————
+  // 3) Appels API “Événements”
+  // ——————————————————————————————
   function apiFetch(path, options = {}) {
-    // Ajoute les en-têtes X-User-Id et X-User-Role pour que le backend sache qui fait la requête.
     const headers = options.headers || {};
     if (currentUser) {
       headers['X-User-Id']   = currentUser.id;
@@ -122,9 +130,7 @@
   }
 
   async function validateEvent(id) {
-    const res = await apiFetch(`/events/validate/${id}`, {
-      method: 'POST'
-    });
+    const res = await apiFetch(`/events/validate/${id}`, { method: 'POST' });
     if (!res.ok) {
       const err = await res.json();
       alert('Erreur validation : ' + (err.error || res.status));
@@ -134,9 +140,7 @@
   }
 
   async function deleteEvent(id) {
-    const res = await apiFetch(`/events/${id}`, {
-      method: 'DELETE'
-    });
+    const res = await apiFetch(`/events/${id}`, { method: 'DELETE' });
     if (!res.ok) {
       const err = await res.json();
       alert('Erreur suppression : ' + (err.error || res.status));
@@ -145,34 +149,9 @@
     }
   }
 
-  // ---------------- Affichage Utilisateur ----------------
-
-  function renderUserInfo() {
-    const container = document.getElementById('user-info');
-
-    if (!currentUser) {
-      // Afficher le bouton “Se connecter avec Discord”
-      container.innerHTML = `
-        <button id="login-btn">Se connecter avec Discord</button>
-      `;
-      document.getElementById('login-btn').onclick = loginWithDiscord;
-    } else {
-      // Afficher avatar, pseudo, rôle et bouton “Déconnexion”
-      const avatarUrl = currentUser.avatar
-        ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`
-        : 'https://cdn.discordapp.com/embed/avatars/0.png';
-      container.innerHTML = `
-        <img src="${avatarUrl}" alt="Avatar" />
-        <span><strong>${currentUser.username}</strong></span>
-        <span class="badge">${currentUser.role}</span>
-        <button id="logout-btn">Déconnexion</button>
-      `;
-      document.getElementById('logout-btn').onclick = logout;
-    }
-  }
-
-  // ---------------- Affichage Calendrier ----------------
-
+  // ——————————————————————————————
+  // 4) Affichage du calendrier
+  // ——————————————————————————————
   async function renderCalendar() {
     const calendarEl = document.getElementById('calendar-days');
     const headerEl   = document.getElementById('month-year');
@@ -186,14 +165,13 @@
     const totalDays = new Date(curYear, curMonth + 1, 0).getDate();
 
     calendarEl.innerHTML = '';
-    // Cases vides jusqu’au premier jour
     for (let i = 0; i < firstDay; i++) {
       const empty = document.createElement('div');
       empty.className = 'day';
       calendarEl.appendChild(empty);
     }
 
-    const monthStr = `${curYear}-${String(curMonth + 1).padStart(2, '0')}`;
+    const monthStr = `${curYear}-${String(curMonth + 1).padStart(2,'0')}`;
     const events   = await loadEvents(monthStr);
 
     for (let d = 1; d <= totalDays; d++) {
@@ -203,26 +181,26 @@
       cell.dataset.date = fullDate;
       cell.innerHTML = `<strong>${d}</strong>`;
 
-      // Si connecté et rôle = creator ou admin → bouton “+”
+      // Si connecté ET rôle = creator ou admin → bouton “+”
       if (currentUser && (currentUser.role === 'creator' || currentUser.role === 'admin')) {
         const btnAdd = document.createElement('button');
         btnAdd.textContent = '+';
-        btnAdd.style.fontSize   = '0.8rem';
-        btnAdd.style.marginTop  = '4px';
+        btnAdd.style.fontSize  = '0.8rem';
+        btnAdd.style.marginTop = '4px';
         btnAdd.onclick = () => {
-          const title = prompt(`Titre de l’événement pour le ${fullDate} :`);
+          const title = prompt(`Titre de l’événement pour ${fullDate} :`);
           if (title) createEvent(fullDate, title);
         };
         cell.appendChild(btnAdd);
       }
 
-      // Afficher les événements du jour
+      // Affiche les événements du jour
       const dayEvents = events.filter(e => e.date === fullDate);
       dayEvents.forEach(e => {
         const evDiv = document.createElement('div');
         evDiv.className = 'event';
         evDiv.innerHTML = `${e.title}` + (!e.validated ? `<span> (⏳)</span>` : '');
-        // Si admin → boutons valider / supprimer
+        // Si rôle = admin → boutons valider / supprimer
         if (currentUser && currentUser.role === 'admin') {
           if (!e.validated) {
             const btnVal = document.createElement('button');
@@ -246,8 +224,9 @@
     }
   }
 
-  // ---------------- Navigation mois ----------------
-
+  // ——————————————————————————————
+  // 5) Navigation mois
+  // ——————————————————————————————
   function changeMonth(delta) {
     curMonth += delta;
     if (curMonth < 0) {
@@ -260,18 +239,16 @@
     renderCalendar();
   }
 
-  // ---------------- Initialisation ----------------
-
+  // ——————————————————————————————
+  // 6) Initialisation
+  // ——————————————————————————————
   window.addEventListener('DOMContentLoaded', () => {
-    // 1) On initialise currentUser à partir des paramètres d’URL ou de localStorage
-    initUserFromQuery();
-    // 2) On affiche le header “user-info”
+    initUserFromQueryOrStorage();
     renderUserInfo();
-    // 3) On génère le calendrier du mois courant
     renderCalendar();
   });
 
-  // Exposer dans le scope global pour les onclick
+  // Exposer pour les onclick
   window.changeMonth   = changeMonth;
   window.validateEvent = validateEvent;
   window.deleteEvent   = deleteEvent;
