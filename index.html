@@ -1,32 +1,37 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calendrier Discord</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calendrier Évènements Discord</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>🗓️ Calendrier Collaboratif Discord</h1>
-  <div id="login-container">
-    <button onclick="loginWithDiscord()">🔐 Se connecter avec Discord</button>
-  </div>
+  <header>
+    <h1>Calendrier Évènements Discord</h1>
+    <button id="login-btn">Se connecter avec Discord</button>
+    <button id="logout-btn" style="display:none;">Déconnexion</button>
+  </header>
 
-  <div id="main-content" style="display:none;">
-    <div class="event-form" id="form-container" style="display:none;">
-      <h2>Créer un événement</h2>
-      <input type="text" id="title" placeholder="Titre de l'événement">
-      <input type="date" id="date">
-      <textarea id="description" placeholder="Description"></textarea>
-      <button class="btn btn-create" onclick="createEvent()">Créer</button>
-    </div>
+  <main>
+    <div id="user-info" style="display:none;"></div>
 
-    <div class="event-list">
-      <h2>Événements</h2>
-      <div id="events"></div>
-    </div>
-  </div>
+    <section id="events-section" style="display:none;">
+      <h2>Évènements</h2>
+      <ul id="events-list"></ul>
+    </section>
 
-  <script src="script.js"></script>
+    <section id="create-event" style="display:none;">
+      <h2>Créer un évènement</h2>
+      <form id="event-form">
+        <input type="text" id="title" placeholder="Titre" required /><br/>
+        <input type="date" id="date" required /><br/>
+        <textarea id="description" placeholder="Description" required></textarea><br/>
+        <button type="submit">Créer</button>
+      </form>
+    </section>
+  </main>
+
+<script src="app.js"></script>
 </body>
 </html>
