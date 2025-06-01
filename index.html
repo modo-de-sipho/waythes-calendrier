@@ -3,22 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calendrier Collaboratif</title>
+  <title>Calendrier Discord</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Calendrier Collaboratif</h1>
-  <div class="event-form">
-    <h2>Créer un événement</h2>
-    <input type="text" id="title" placeholder="Titre de l'événement">
-    <input type="date" id="date">
-    <textarea id="description" placeholder="Description"></textarea>
-    <button class="btn btn-create" onclick="createEvent()">Créer</button>
+  <h1>🗓️ Calendrier Collaboratif Discord</h1>
+  <div id="login-container">
+    <button onclick="loginWithDiscord()">🔐 Se connecter avec Discord</button>
   </div>
-  <div class="event-list">
-    <h2>Événements</h2>
-    <div id="events"></div>
+
+  <div id="main-content" style="display:none;">
+    <div class="event-form" id="form-container" style="display:none;">
+      <h2>Créer un événement</h2>
+      <input type="text" id="title" placeholder="Titre de l'événement">
+      <input type="date" id="date">
+      <textarea id="description" placeholder="Description"></textarea>
+      <button class="btn btn-create" onclick="createEvent()">Créer</button>
+    </div>
+
+    <div class="event-list">
+      <h2>Événements</h2>
+      <div id="events"></div>
+    </div>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
