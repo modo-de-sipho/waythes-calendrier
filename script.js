@@ -1,7 +1,6 @@
 const api = 'http://fnode1.astrast.host:9467';
 let user = null;
 
-// OAuth Discord
 function startOAuth() {
   const clientId = '1378637692169879632';
   const redirectUri = window.location.origin;
@@ -10,7 +9,6 @@ function startOAuth() {
   window.location.href = url;
 }
 
-// Traitement post-OAuth
 window.addEventListener('DOMContentLoaded', async () => {
   const token = new URLSearchParams(window.location.hash.slice(1)).get('access_token');
   if (!token) return;
@@ -20,14 +18,29 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
   user = await res.json();
 
+  // Load permission
+  const permRes = await fetch(`${api}/api/permissions/${user.id}`);
+  const perm = await permRes.json();
+  user.role = perm.role || 'visitor';
+
+  afficherCalendrierAvecPermissions();
+});
+
+function afficherCalendrierAvecPermissions() {
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('calendarPage').style.display = 'block';
+
   document.getElementById('userName').textContent = `${user.username}#${user.discriminator}`;
   document.getElementById('userEmail').textContent = user.email;
   document.getElementById('userAvatar').src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+  document.getElementById('userRole').textContent = user.role.toUpperCase();
+
+  if (user.role === 'visitor') {
+    document.getElementById('addBtn').style.display = 'none';
+  }
 
   chargerEvenements();
-});
+}
 
 function logout() {
   window.location.href = window.location.origin;
@@ -64,6 +77,11 @@ async function chargerEvenements() {
 }
 
 async function addEvent() {
+  if (user.role === 'visitor') {
+    alert("Tu n'as pas la permission d'ajouter des événements.");
+    return;
+  }
+
   const newEvent = {
     userId: user.id,
     title: document.getElementById('eventTitle').value,
