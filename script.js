@@ -1,6 +1,41 @@
-const urlParams = new URLSearchParams(window.location.search);
-const userId = urlParams.get("id");
 const backendUrl = "http://fnode1.astrast.host:9467";
+let userId = null;
+let userPerm = 0;
+
+function loginWithDiscord() {
+  const clientId = "TON_CLIENT_ID_DISCORD";
+  const redirectUri = encodeURIComponent(window.location.href);
+  const scope = "identify guilds";
+  window.location.href = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+}
+
+async function fetchUserData(token) {
+  const res = await fetch("https://discord.com/api/users/@me", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return await res.json();
+}
+
+async function init() {
+  const hash = new URLSearchParams(window.location.hash.substring(1));
+  const accessToken = hash.get("access_token");
+  if (!accessToken) return;
+
+  document.getElementById("login-container").style.display = "none";
+  document.getElementById("main-content").style.display = "block";
+
+  const userData = await fetchUserData(accessToken);
+  userId = userData.id;
+
+  // Récupérer la permission depuis le backend
+  const permRes = await fetch(`${backendUrl}/api/permissions?id=${userId}`);
+  const permData = await permRes.json();
+  userPerm = permData.level || 1;
+
+  if (userPerm >= 2) document.getElementById("form-container").style.display = "block";
+
+  fetchEvents();
+}
 
 async function fetchEvents() {
   const res = await fetch(`${backendUrl}/api/events?id=${userId}`);
@@ -15,9 +50,16 @@ async function fetchEvents() {
       <p><strong>Date:</strong> ${event.date}</p>
       <p>${event.description}</p>
       <p><em>Status:</em> ${event.status}</p>
-      ${event.status === 'pending' && event.canValidate ? `<button class="btn btn-validate" onclick="validateEvent(${event.id})">Valider</button>` : ''}
-      ${event.canDelete ? `<button class="btn btn-delete" onclick="deleteEvent(${event.id})">Supprimer</button>` : ''}
     `;
+
+    if (event.status === 'pending' && userPerm >= 3) {
+      div.innerHTML += `<button class="btn btn-validate" onclick="validateEvent(${event.id})">Valider</button>`;
+    }
+
+    if (userPerm >= 3 || (userPerm >= 2 && event.author === userId)) {
+      div.innerHTML += `<button class="btn btn-delete" onclick="deleteEvent(${event.id})">Supprimer</button>`;
+    }
+
     container.appendChild(div);
   });
 }
@@ -54,4 +96,4 @@ async function deleteEvent(id) {
   fetchEvents();
 }
 
-fetchEvents();
+window.onload = init;
