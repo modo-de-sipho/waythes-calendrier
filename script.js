@@ -7,11 +7,34 @@
   let currentUser = null;
   const today = new Date();
   let curYear  = today.getFullYear();
-  let curMonth = today.getMonth(); // 0 à 11
+  let curMonth = today.getMonth(); // 0..11
 
   // ---------------- Fonctions API ----------------
 
-  // 1) Récupérer le profil (session)
+  // 1) Connexion (POST /login)
+  async function doLogin(username, role) {
+    try {
+      const res = await fetch(`${apiURL}/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, role })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        return alert('Erreur login : ' + (err.error || res.status));
+      }
+      const data = await res.json();
+      currentUser = data.user;
+      renderUserInfo();
+      renderCalendar();
+    } catch (e) {
+      alert('Impossible de se connecter.');
+      console.error(e);
+    }
+  }
+
+  // 2) Récupérer le profil existant (GET /profile)
   async function fetchProfile() {
     try {
       const res = await fetch(`${apiURL}/profile`, {
@@ -27,7 +50,7 @@
     renderCalendar();
   }
 
-  // 2) Déconnexion
+  // 3) Déconnexion (POST /logout)
   async function doLogout() {
     await fetch(`${apiURL}/logout`, {
       method: 'POST',
@@ -38,16 +61,20 @@
     renderCalendar();
   }
 
-  // 3) Charger les événements du mois
+  // 4) Charger les événements du mois (GET /events?month=YYYY-MM)
   async function loadEvents(monthStr) {
-    const res = await fetch(`${apiURL}/events?month=${monthStr}`, {
-      credentials: 'include'
-    });
-    if (!res.ok) return [];
-    return await res.json();
+    try {
+      const res = await fetch(`${apiURL}/events?month=${monthStr}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) return [];
+      return await res.json();
+    } catch {
+      return [];
+    }
   }
 
-  // 4) Créer un événement
+  // 5) Créer un événement (POST /events)
   async function createEvent(date, title) {
     const res = await fetch(`${apiURL}/events`, {
       method: 'POST',
@@ -63,7 +90,7 @@
     }
   }
 
-  // 5) Valider un événement (admin)
+  // 6) Valider un événement (admin) (POST /events/validate/:id)
   async function validateEvent(id) {
     const res = await fetch(`${apiURL}/events/validate/${id}`, {
       method: 'POST',
@@ -77,7 +104,7 @@
     }
   }
 
-  // 6) Supprimer un événement (admin)
+  // 7) Supprimer un événement (admin) (DELETE /events/:id)
   async function deleteEvent(id) {
     const res = await fetch(`${apiURL}/events/${id}`, {
       method: 'DELETE',
@@ -95,14 +122,31 @@
 
   function renderUserInfo() {
     const container = document.getElementById('user-info');
+
     if (!currentUser) {
+      // Afficher le formulaire de connexion
       container.innerHTML = `
-        <button id="login-btn">Se connecter avec Discord</button>
+        <form id="login-form">
+          <input type="text" id="inp-username" placeholder="Ton pseudo" required />
+          <select id="sel-role" required>
+            <option value="visitor">🔵 Visiteur</option>
+            <option value="creator">🟡 Créateur</option>
+            <option value="admin">🟢 Admin</option>
+          </select>
+          <button type="button" id="btn-login">Se connecter</button>
+        </form>
       `;
-      document.getElementById('login-btn').onclick = () => {
-        window.location.href = `${apiURL}/auth/discord`;
+      document.getElementById('btn-login').onclick = () => {
+        const username = document.getElementById('inp-username').value.trim();
+        const role     = document.getElementById('sel-role').value;
+        if (!username) {
+          alert('Entre un pseudo.');
+          return;
+        }
+        doLogin(username, role);
       };
     } else {
+      // Afficher l’avatar + pseudo + badge + bouton déconnexion
       const avatarUrl = currentUser.avatar
         ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`
         : 'https://cdn.discordapp.com/embed/avatars/0.png';
@@ -131,18 +175,18 @@
     const totalDays = new Date(curYear, curMonth + 1, 0).getDate();
 
     calendarEl.innerHTML = '';
-    // Cases vides avant le 1er
+    // Cases vides jusqu’au premier jour
     for (let i = 0; i < firstDay; i++) {
       const empty = document.createElement('div');
       empty.className = 'day';
       calendarEl.appendChild(empty);
     }
 
-    // Charger les events de ce mois
+    // Charger les événements du mois
     const monthStr = `${curYear}-${String(curMonth + 1).padStart(2, '0')}`;
     const events   = await loadEvents(monthStr);
 
-    // Générer chaque jour
+    // Générer les cases pour chaque jour
     for (let d = 1; d <= totalDays; d++) {
       const fullDate = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const cell = document.createElement('div');
@@ -150,7 +194,7 @@
       cell.dataset.date = fullDate;
       cell.innerHTML = `<strong>${d}</strong>`;
 
-      // Si connecté et rôle = creator ou admin → bouton “+”
+      // Si connecté et rôle = creator ou admin → bouton “+” pour créer
       if (currentUser && (currentUser.role === 'creator' || currentUser.role === 'admin')) {
         const btnAdd = document.createElement('button');
         btnAdd.textContent = '+';
@@ -169,7 +213,7 @@
         const evDiv = document.createElement('div');
         evDiv.className = 'event';
         evDiv.innerHTML = `${e.title}` + (!e.validated ? `<span> (⏳)</span>` : '');
-        // Si admin, afficher “✔” et “✖”
+        // Si admin → boutons valider / supprimer
         if (currentUser && currentUser.role === 'admin') {
           if (!e.validated) {
             const btnVal = document.createElement('button');
@@ -193,7 +237,7 @@
     }
   }
 
-  // Navigation de mois
+  // Navigation mois
   function changeMonth(delta) {
     curMonth += delta;
     if (curMonth < 0) {
@@ -208,7 +252,7 @@
 
   // ---------------- Initialisation ----------------
   window.addEventListener('DOMContentLoaded', fetchProfile);
-  // Exposer pour les onclick
+  // Exposer dans le scope global pour onclick sur les boutons “+”, etc.
   window.changeMonth   = changeMonth;
   window.validateEvent = validateEvent;
   window.deleteEvent   = deleteEvent;
