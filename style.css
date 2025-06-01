@@ -1,0 +1,62 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f0f2f5;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.event-form,
+.event-list {
+  max-width: 600px;
+  margin: auto;
+  margin-top: 20px;
+}
+
+.event-form input,
+.event-form textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+}
+
+.event {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.pending {
+  background: #fff3cd;
+}
+
+.validated {
+  background: #d4edda;
+}
+
+.btn {
+  padding: 10px;
+  margin-top: 10px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+}
+
+.btn-create {
+  background: #007bff;
+  color: white;
+}
+
+.btn-validate {
+  background: #28a745;
+  color: white;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+  float: right;
+}
