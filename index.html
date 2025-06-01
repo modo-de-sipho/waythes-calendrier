@@ -4,171 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Waythes Calendrier</title>
-  <style>
-    body {
-      background-color: #202225;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
-      padding: 20px;
-      margin: 0;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    .calendar {
-      max-width: 900px;
-      margin: auto;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      background-color: #2c2f33;
-    }
-    .day {
-      border: 1px solid #444;
-      padding: 10px;
-      min-height: 80px;
-      position: relative;
-    }
-    .event {
-      background: #7289da;
-      padding: 3px 5px;
-      margin-top: 5px;
-      font-size: 0.8em;
-      border-radius: 4px;
-    }
-    button {
-      background: #5865f2;
-      border: none;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #4752c4;
-    }
-    .nav-btns {
-      display: flex;
-      gap: 10px;
-    }
-    #form-container {
-      margin-top: 20px;
-      display: none;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>📅 Waythes Calendrier</h1>
-  <div class="calendar">
-    <div class="header">
-      <div class="nav-btns">
-        <button onclick="changeMonth(-1)">← Mois précédent</button>
-        <button onclick="changeMonth(1)">Mois suivant →</button>
-      </div>
-      <h2 id="month-year"></h2>
+  <header>
+    <h1>📅 Waythes Calendrier</h1>
+    <div id="user-info">
+      <!-- Affiche le bouton de connexion ou le profil connecté -->
     </div>
-    <div class="days" id="calendar-days"></div>
-  </div>
+  </header>
 
-  <div id="form-container">
-    <h3>Créer un événement</h3>
-    <input type="date" id="event-date" />
-    <input type="text" id="event-title" placeholder="Titre de l'événement" />
-    <button onclick="submitEvent()">Envoyer</button>
-  </div>
+  <main class="calendar">
+    <div class="header-cal">
+      <button onclick="changeMonth(-1)">← Mois précédent</button>
+      <h2 id="month-year"></h2>
+      <button onclick="changeMonth(1)">Mois suivant →</button>
+    </div>
+    <div class="days" id="calendar-days">
+      <!-- Les cases du calendrier seront injectées ici -->
+    </div>
+  </main>
 
-  <script>
-    const apiURL = 'http://fnode1.astrast.host:9467'; // Ton backend
-    const userRole = 'admin'; // Peut être 'user', 'createur', 'admin'
-    const today = new Date();
-    let currentMonth = today.getMonth();
-    let currentYear = today.getFullYear();
-
-    const calendarEl = document.getElementById('calendar-days');
-    const monthYearEl = document.getElementById('month-year');
-
-    function loadCalendar(year, month) {
-      const date = new Date(year, month);
-      const monthName = date.toLocaleString('default', { month: 'long' });
-      monthYearEl.textContent = `${monthName} ${year}`;
-
-      const firstDay = new Date(year, month, 1).getDay();
-      const totalDays = new Date(year, month + 1, 0).getDate();
-
-      calendarEl.innerHTML = '';
-
-      for (let i = 0; i < firstDay; i++) {
-        calendarEl.innerHTML += `<div class="day"></div>`;
-      }
-
-      for (let d = 1; d <= totalDays; d++) {
-        const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const cell = document.createElement('div');
-        cell.className = 'day';
-        cell.innerHTML = `<strong>${d}</strong>`;
-        cell.dataset.date = fullDate;
-        calendarEl.appendChild(cell);
-      }
-
-      fetch(`${apiURL}/events?month=${year}-${String(month + 1).padStart(2, '0')}`)
-        .then(res => res.json())
-        .then(data => {
-          data.forEach(event => {
-            const cell = [...calendarEl.children].find(div => div.dataset.date === event.date);
-            if (cell) {
-              const el = document.createElement('div');
-              el.className = 'event';
-              el.textContent = event.title;
-              if (userRole === 'admin' && !event.validated) {
-                el.innerHTML += ` <button onclick="validateEvent('${event.id}')">✔</button>`;
-              }
-              cell.appendChild(el);
-            }
-          });
-        });
-    }
-
-    function changeMonth(delta) {
-      currentMonth += delta;
-      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-      else if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-      loadCalendar(currentYear, currentMonth);
-    }
-
-    function submitEvent() {
-      const date = document.getElementById('event-date').value;
-      const title = document.getElementById('event-title').value;
-      if (!date || !title) return alert("Remplis tous les champs !");
-      fetch(`${apiURL}/events`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, title, validated: userRole === 'admin' })
-      }).then(() => {
-        loadCalendar(currentYear, currentMonth);
-        document.getElementById('event-date').value = '';
-        document.getElementById('event-title').value = '';
-      });
-    }
-
-    function validateEvent(id) {
-      fetch(`${apiURL}/events/validate/${id}`, {
-        method: 'POST'
-      }).then(() => loadCalendar(currentYear, currentMonth));
-    }
-
-    if (userRole !== 'user') {
-      document.getElementById('form-container').style.display = 'block';
-    }
-
-    loadCalendar(currentYear, currentMonth);
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
