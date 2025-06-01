@@ -41,7 +41,12 @@ header {
   margin-left: 8px;
 }
 
-/* --------------- Calendrier ---------------- */
+/* ----------- Bouton “Login” ------------ */
+#login-btn {
+  background-color: #7289da;
+}
+
+/* ---------------- Calendrier ---------------- */
 .calendar {
   max-width: 900px;
   margin: 0 auto;
@@ -107,9 +112,4 @@ button {
 }
 button:hover {
   background: #4752c4;
-}
-
-/* ----------- Formulaire “Login” ------------ */
-#login-btn {
-  background-color: #7289da;
 }
