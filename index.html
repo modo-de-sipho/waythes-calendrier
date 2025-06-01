@@ -1,59 +1,891 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Waythes Calendrier</title>
-  <link rel="stylesheet" href="style.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier Discord - Gestion des Événements</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .auth-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .discord-btn {
+            background: #5865F2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .discord-btn:hover {
+            background: #4752C4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(88, 101, 242, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #5865F2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .permission-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .level-1 { background: #e3f2fd; color: #1976d2; }
+        .level-2 { background: #fff3e0; color: #f57c00; }
+        .level-3 { background: #e8f5e8; color: #388e3c; }
+
+        .calendar-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .calendar-day {
+            background: white;
+            min-height: 80px;
+            padding: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover {
+            background: #f5f5f5;
+        }
+
+        .calendar-day.other-month {
+            background: #fafafa;
+            color: #999;
+        }
+
+        .calendar-day.today {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+
+        .day-number {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .event {
+            background: #667eea;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .event:hover {
+            transform: scale(1.05);
+        }
+
+        .event.pending {
+            background: #ff9800;
+        }
+
+        .event.validated {
+            background: #4caf50;
+        }
+
+        .weekday-header {
+            background: #667eea;
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            position: relative;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #4caf50;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .event-details {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-pending {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-validated {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .login-container {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .login-container p {
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-grid {
+                font-size: 12px;
+            }
+            
+            .calendar-day {
+                min-height: 60px;
+                padding: 4px;
+            }
+            
+            .modal-content {
+                margin: 10% 20px;
+                padding: 20px;
+            }
+
+            .calendar-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .calendar-nav {
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="login-page" id="loginPage">
-    <div class="login-container">
-      <h1>Connexion Discord</h1>
-      <p class="subtitle">Identifiez-vous pour accéder à votre calendrier</p>
-      <button class="discord-btn" onclick="startOAuth()">Se connecter avec Discord</button>
-    </div>
-  </div>
-
-  <div class="calendar-page" id="calendarPage" style="display:none;">
-    <div class="header">
-      <div class="user-info">
-        <img id="userAvatar" class="user-avatar" src="" alt="avatar" />
-        <div class="user-details">
-          <h2 id="userName"></h2>
-          <p id="userEmail"></p>
-          <div id="userRole" class="permission-badge"></div>
+    <div class="container">
+        <div class="header">
+            <div class="auth-section">
+                <h1>📅 Calendrier Discord</h1>
+                <div id="authContainer">
+                    <a href="#" class="discord-btn" id="loginBtn">
+                        🔗 Se connecter avec Discord
+                    </a>
+                </div>
+            </div>
         </div>
-      </div>
-      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+
+        <div id="loginSection" class="login-container">
+            <h2>Bienvenue sur le Calendrier Discord</h2>
+            <p>Connectez-vous avec votre compte Discord pour accéder au calendrier et gérer vos événements selon vos permissions.</p>
+            <p><strong>Niveaux de permission :</strong></p>
+            <p>🔵 <strong>Niveau 1 (Visiteur)</strong> : Consultation des événements</p>
+            <p>🟡 <strong>Niveau 2 (Créateur)</strong> : Création d'événements (validation requise)</p>
+            <p>🟢 <strong>Niveau 3 (Admin)</strong> : Validation et gestion complète</p>
+            <a href="#" class="discord-btn" id="loginBtn2">
+                🔗 Se connecter avec Discord
+            </a>
+        </div>
+
+        <div class="calendar-container" id="calendarSection" style="display: none;">
+            <div class="calendar-header">
+                <h2 id="currentMonth"></h2>
+                <div class="calendar-nav">
+                    <button class="nav-btn" onclick="previousMonth()">‹ Précédent</button>
+                    <button class="nav-btn" onclick="nextMonth()">Suivant ›</button>
+                    <button class="nav-btn" onclick="showAddEventModal()" id="addEventBtn" style="display: none;">+ Ajouter</button>
+                    <button class="nav-btn" onclick="showAdminPanel()" id="adminBtn" style="display: none;">⚙️ Admin</button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Le calendrier sera généré ici -->
+            </div>
+        </div>
     </div>
 
-    <div class="calendar-container">
-      <div class="calendar-header">
-        <h2>Calendrier</h2>
-        <button id="addBtn" class="add-event-btn" onclick="openAddEventModal()">+ Ajouter</button>
-      </div>
-      <div class="calendar-grid" id="calendarDays"></div>
+    <!-- Modal pour ajouter/modifier un événement -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">Ajouter un événement</h3>
+            <form id="eventForm">
+                <div class="form-group">
+                    <label for="eventTitle">Titre de l'événement *</label>
+                    <input type="text" id="eventTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventDate">Date *</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventTime">Heure</label>
+                    <input type="time" id="eventTime">
+                </div>
+                <div class="form-group">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn">Enregistrer</button>
+                <button type="button" class="btn" onclick="closeModal()">Annuler</button>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <!-- Modal ajout -->
-  <div class="modal" id="addEventModal">
-    <div class="modal-content">
-      <h3>Nouvel événement</h3>
-      <input id="eventTitle" placeholder="Titre" />
-      <input id="eventDate" type="date" />
-      <select id="eventCategory">
-        <option value="personal">Personnel</option>
-        <option value="work">Travail</option>
-        <option value="important">Important</option>
-      </select>
-      <textarea id="eventDescription" placeholder="Description"></textarea>
-      <button class="btn-primary" onclick="addEvent()">Ajouter</button>
-      <button class="btn-secondary" onclick="closeAddEventModal()">Annuler</button>
+    <!-- Modal pour voir les détails d'un événement -->
+    <div id="eventDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDetailsModal()">&times;</span>
+            <h3>Détails de l'événement</h3>
+            <div id="eventDetailsContent"></div>
+        </div>
     </div>
-  </div>
 
-  <script src="script.js"></script>
-</body>
-</html>
+    <!-- Modal Admin -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAdminModal()">&times;</span>
+            <h3>Panel Administrateur</h3>
+            <div id="adminContent">
+                <h4>Événements en attente de validation :</h4>
+                <div id="pendingEvents"></div>
+                <hr style="margin: 20px 0;">
+                <h4>Gestion des utilisateurs :</h4>
+                <div id="userManagement"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration Discord OAuth2
+        const DISCORD_CLIENT_ID = '1378637692169879632';
+        const REDIRECT_URI = encodeURIComponent(window.location.origin + '/auth');
+        const DISCORD_OAUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify`;
+
+        // Variables globales
+        let currentUser = null;
+        let currentDate = new Date();
+        let events = [
+            {
+                id: 1,
+                title: "Réunion équipe",
+                date: "2025-06-15",
+                time: "14:00",
+                description: "Réunion hebdomadaire de l'équipe",
+                status: "validated",
+                creator: "Admin",
+                createdAt: new Date()
+            },
+            {
+                id: 2,
+                title: "Formation Discord",
+                date: "2025-06-20",
+                time: "10:00",
+                description: "Formation sur les nouvelles fonctionnalités",
+                status: "pending",
+                creator: "User2",
+                createdAt: new Date()
+            },
+            {
+                id: 3,
+                title: "Événement communautaire",
+                date: "2025-06-25",
+                time: "19:00",
+                description: "Soirée jeux en ligne",
+                status: "validated",
+                creator: "Moderator",
+                createdAt: new Date()
+            }
+        ];
+
+        // Simulation des utilisateurs Discord
+        const discordUsers = {
+            '123456789': { 
+                id: '123456789',
+                username: 'Visiteur', 
+                level: 1, 
+                avatar: 'V',
+                discriminator: '0001'
+            },
+            '987654321': { 
+                id: '987654321',
+                username: 'Créateur', 
+                level: 2, 
+                avatar: 'C',
+                discriminator: '0002'
+            },
+            '456789123': { 
+                id: '456789123',
+                username: 'Admin', 
+                level: 3, 
+                avatar: 'A',
+                discriminator: '0003'
+            }
+        };
+
+        // Vérifier si on revient de l'authentification Discord
+        function checkDiscordAuth() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            
+            if (code) {
+                // Simuler la récupération des données utilisateur Discord
+                const userIds = Object.keys(discordUsers);
+                const randomUserId = userIds[Math.floor(Math.random() * userIds.length)];
+                const userData = discordUsers[randomUserId];
+                
+                currentUser = userData;
+                
+                // Nettoyer l'URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                updateAuthUI();
+                updatePermissions();
+                showCalendar();
+                
+                alert(`Connexion réussie ! Bienvenue ${userData.username} (Niveau ${userData.level})`);
+            }
+        }
+
+        function loginWithDiscord() {
+            // Rediriger vers Discord OAuth2
+            window.location.href = DISCORD_OAUTH_URL;
+        }
+
+        function logout() {
+            currentUser = null;
+            updateAuthUI();
+            updatePermissions();
+            showLogin();
+        }
+
+        function updateAuthUI() {
+            const authContainer = document.getElementById('authContainer');
+            
+            if (currentUser) {
+                authContainer.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-avatar">${currentUser.avatar}</div>
+                        <span>${currentUser.username}#${currentUser.discriminator}</span>
+                        <span class="permission-badge level-${currentUser.level}">
+                            Niveau ${currentUser.level}
+                        </span>
+                        <button class="discord-btn" onclick="logout()" style="background: #f44336; margin-left: 10px;">
+                            Déconnexion
+                        </button>
+                    </div>
+                `;
+            } else {
+                authContainer.innerHTML = `
+                    <a href="#" class="discord-btn" onclick="loginWithDiscord()">
+                        🔗 Se connecter avec Discord
+                    </a>
+                `;
+            }
+        }
+
+        function updatePermissions() {
+            const addEventBtn = document.getElementById('addEventBtn');
+            const adminBtn = document.getElementById('adminBtn');
+            
+            if (currentUser) {
+                if (currentUser.level >= 2) {
+                    addEventBtn.style.display = 'inline-block';
+                } else {
+                    addEventBtn.style.display = 'none';
+                }
+                
+                if (currentUser.level >= 3) {
+                    adminBtn.style.display = 'inline-block';
+                } else {
+                    adminBtn.style.display = 'none';
+                }
+            } else {
+                addEventBtn.style.display = 'none';
+                adminBtn.style.display = 'none';
+            }
+            
+            renderCalendar();
+        }
+
+        function showLogin() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('calendarSection').style.display = 'none';
+        }
+
+        function showCalendar() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('calendarSection').style.display = 'block';
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = 
+                new Date(year, month).toLocaleDateString('fr-FR', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            // En-têtes des jours
+            const weekdays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+            weekdays.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'weekday-header';
+                dayHeader.textContent = day;
+                calendarGrid.appendChild(dayHeader);
+            });
+
+            // Générer les jours du calendrier
+            for (let i = 0; i < 42; i++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + i);
+                
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                
+                if (cellDate.getMonth() !== month) {
+                    dayCell.classList.add('other-month');
+                }
+                
+                if (cellDate.toDateString() === new Date().toDateString()) {
+                    dayCell.classList.add('today');
+                }
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = cellDate.getDate();
+                dayCell.appendChild(dayNumber);
+                
+                // Ajouter les événements du jour
+                const dayEvents = events.filter(event => 
+                    event.date === cellDate.toISOString().split('T')[0]
+                );
+                
+                dayEvents.forEach(event => {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = `event ${event.status}`;
+                    eventDiv.textContent = event.title;
+                    eventDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        showEventDetails(event);
+                    };
+                    dayCell.appendChild(eventDiv);
+                });
+                
+                dayCell.onclick = () => {
+                    if (currentUser && currentUser.level >= 2) {
+                        showAddEventModal(cellDate.toISOString().split('T')[0]);
+                    }
+                };
+                
+                calendarGrid.appendChild(dayCell);
+            }
+        }
+
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function showAddEventModal(selectedDate = null) {
+            if (!currentUser || currentUser.level < 2) {
+                alert('Vous devez être connecté avec un niveau 2 minimum pour créer des événements.');
+                return;
+            }
+            
+            document.getElementById('modalTitle').textContent = 'Ajouter un événement';
+            document.getElementById('eventForm').reset();
+            
+            if (selectedDate) {
+                document.getElementById('eventDate').value = selectedDate;
+            }
+            
+            document.getElementById('eventModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+
+        function showEventDetails(event) {
+            const modal = document.getElementById('eventDetailsModal');
+            const content = document.getElementById('eventDetailsContent');
+            
+            let statusText = event.status === 'pending' ? 'En attente' : 'Validé';
+            let statusClass = event.status === 'pending' ? 'status-pending' : 'status-validated';
+            
+            let adminActions = '';
+            if (currentUser && currentUser.level >= 3) {
+                if (event.status === 'pending') {
+                    adminActions = `
+                        <div class="admin-actions">
+                            <button class="btn btn-success" onclick="validateEvent(${event.id})">
+                                ✓ Valider
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectEvent(${event.id})">
+                                ✗ Rejeter
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    adminActions = `
+                        <div class="admin-actions">
+                            <button class="btn btn-danger" onclick="deleteEvent(${event.id})">
+                                🗑️ Supprimer
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+            
+            content.innerHTML = `
+                <div class="event-details">
+                    <h4>${event.title} <span class="status-indicator ${statusClass}">${statusText}</span></h4>
+                    <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString('fr-FR')}</p>
+                    ${event.time ? `<p><strong>Heure:</strong> ${event.time}</p>` : ''}
+                    ${event.description ? `<p><strong>Description:</strong> ${event.description}</p>` : ''}
+                    <p><strong>Créé par:</strong> ${event.creator}</p>
+                    ${adminActions}
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('eventDetailsModal').style.display = 'none';
+        }
+
+        function showAdminPanel() {
+            if (!currentUser || currentUser.level < 3) {
+                alert('Accès refusé : Niveau 3 requis');
+                return;
+            }
+            
+            const pendingEvents = events.filter(e => e.status === 'pending');
+            const pendingContainer = document.getElementById('pendingEvents');
+            
+            if (pendingEvents.length === 0) {
+                pendingContainer.innerHTML = '<p>Aucun événement en attente</p>';
+            } else {
+                pendingContainer.innerHTML = pendingEvents.map(event => `
+                    <div class="event-details" style="margin-bottom: 10px;">
+                        <strong>${event.title}</strong> - ${new Date(event.date).toLocaleDateString('fr-FR')}
+                        <br>Créé par: ${event.creator}
+                        <div class="admin-actions" style="margin-top: 10px;">
+                            <button class="btn btn-success" onclick="validateEvent(${event.id}); updateAdminPanel();">
+                                ✓ Valider
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectEvent(${event.id}); updateAdminPanel();">
+                                ✗ Rejeter
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Gestion des utilisateurs
+            const userContainer = document.getElementById('userManagement');
+            userContainer.innerHTML = Object.values(discordUsers).map(user => `
+                <div class="event-details" style="margin-bottom: 10px;">
+                    <strong>${user.username}#${user.discriminator}</strong>
+                    <span class="permission-badge level-${user.level}">Niveau ${user.level}</span>
+                    <div class="admin-actions" style="margin-top: 10px;">
+                        <select onchange="changeUserLevel('${user.id}', this.value)">
+                            <option value="1" ${user.level === 1 ? 'selected' : ''}>Niveau 1 - Visiteur</option>
+                            <option value="2" ${user.level === 2 ? 'selected' : ''}>Niveau 2 - Créateur</option>
+                            <option value="3" ${user.level === 3 ? 'selected' : ''}>Niveau 3 - Admin</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('adminModal').style.display = 'block';
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').style.display = 'none';
+        }
+
+        function updateAdminPanel() {
+            showAdminPanel();
+        }
+
+        function changeUserLevel(userId, newLevel) {
+            discordUsers[userId].level = parseInt(newLevel);
+            if (currentUser && currentUser.id === userId) {
+                currentUser.level = parseInt(newLevel);
+                updateAuthUI();
+                updatePermissions();
+            }
+            alert(`Niveau de permission mis à jour pour ${discordUsers[userId].username}`);
+        }
+
+        function validateEvent(eventId) {
+            const event = events.find(e => e.id === eventId);
+            if (event) {
+                event.status = 'validated';
+                renderCalendar();
+                closeDetailsModal();
+                alert('Événement validé avec succès !');
+            }
+        }
+
+        function rejectEvent(eventId) {
+            const eventIndex = events.findIndex(e => e.id === eventId);
+            if (eventIndex !== -1) {
+                events.splice(eventIndex, 1);
+                renderCalendar();
+                closeDetailsModal();
+                alert('Événement rejeté et supprimé.');
+            }
+        }
+
+        function deleteEvent(eventId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
+                const eventIndex = events.findIndex(e => e.id === eventId);
+                if (eventIndex !== -1) {
+                    events.splice(eventIndex, 1);
+                    renderCalendar();
+                    closeDetailsModal();
+                    alert('Événement supprimé avec succès.');
+                }
+            }
+        }
+
+        // Gestion du formulaire d'événement
