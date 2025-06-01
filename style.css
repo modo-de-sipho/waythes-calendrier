@@ -15,7 +15,7 @@ h1 {
   margin-bottom: 10px;
 }
 
-/* --------------- Header / User Info ------------- */
+/* --------- Header / User Info ---------- */
 header {
   max-width: 900px;
   margin: 0 auto 20px auto;
@@ -41,20 +41,7 @@ header {
   margin-left: 8px;
 }
 
-/* --------------- Formulaire Connexion ------------ */
-#login-form {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-#login-form input,
-#login-form select {
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: none;
-}
-
-/* ---------------- Calendrier ------------------- */
+/* --------------- Calendrier ---------------- */
 .calendar {
   max-width: 900px;
   margin: 0 auto;
@@ -81,7 +68,7 @@ header {
   margin-bottom: 4px;
 }
 
-/* --------------- Événements ------------------- */
+/* ------------- Événements ----------------- */
 .event {
   background: #7289da;
   padding: 2px 4px;
@@ -120,4 +107,9 @@ button {
 }
 button:hover {
   background: #4752c4;
+}
+
+/* ----------- Formulaire “Login” ------------ */
+#login-btn {
+  background-color: #7289da;
 }
