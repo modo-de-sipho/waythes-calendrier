@@ -1,99 +1,85 @@
-const backendUrl = "http://fnode1.astrast.host:9467";
-let userId = null;
-let userPerm = 0;
+// script.js
+const api = 'http://fnode1.astrast.host:9467';
 
-function loginWithDiscord() {
-  const clientId = "TON_CLIENT_ID_DISCORD";
-  const redirectUri = encodeURIComponent(window.location.href);
-  const scope = "identify guilds";
-  window.location.href = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
-}
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch(`${api}/api/user`, { credentials: 'include' });
+        if (!res.ok) throw new Error();
 
-async function fetchUserData(token) {
-  const res = await fetch("https://discord.com/api/users/@me", {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return await res.json();
-}
-
-async function init() {
-  const hash = new URLSearchParams(window.location.hash.substring(1));
-  const accessToken = hash.get("access_token");
-  if (!accessToken) return;
-
-  document.getElementById("login-container").style.display = "none";
-  document.getElementById("main-content").style.display = "block";
-
-  const userData = await fetchUserData(accessToken);
-  userId = userData.id;
-
-  // Récupérer la permission depuis le backend
-  const permRes = await fetch(`${backendUrl}/api/permissions?id=${userId}`);
-  const permData = await permRes.json();
-  userPerm = permData.level || 1;
-
-  if (userPerm >= 2) document.getElementById("form-container").style.display = "block";
-
-  fetchEvents();
-}
-
-async function fetchEvents() {
-  const res = await fetch(`${backendUrl}/api/events?id=${userId}`);
-  const data = await res.json();
-  const container = document.getElementById("events");
-  container.innerHTML = "";
-  data.forEach(event => {
-    const div = document.createElement("div");
-    div.className = `event ${event.status === 'pending' ? 'pending' : 'validated'}`;
-    div.innerHTML = `
-      <h3>${event.title}</h3>
-      <p><strong>Date:</strong> ${event.date}</p>
-      <p>${event.description}</p>
-      <p><em>Status:</em> ${event.status}</p>
-    `;
-
-    if (event.status === 'pending' && userPerm >= 3) {
-      div.innerHTML += `<button class="btn btn-validate" onclick="validateEvent(${event.id})">Valider</button>`;
+        const user = await res.json();
+        afficherCalendrier(user);
+        chargerEvenements();
+    } catch (err) {
+        document.getElementById('loginPage').style.display = 'flex';
     }
+});
 
-    if (userPerm >= 3 || (userPerm >= 2 && event.author === userId)) {
-      div.innerHTML += `<button class="btn btn-delete" onclick="deleteEvent(${event.id})">Supprimer</button>`;
+function afficherCalendrier(user) {
+    document.getElementById('calendarPage').style.display = 'block';
+    document.getElementById('userName').textContent = `${user.username}#${user.discriminator}`;
+    document.getElementById('userEmail').textContent = user.email || '';
+    document.getElementById('userAvatar').src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+    document.getElementById('userPermissionBadge').textContent = 'Utilisateur';
+    document.getElementById('userPermissionBadge').classList.add('permission-badge', 'visitor');
+}
+
+function logout() {
+    window.location.href = `${api}/logout`;
+}
+
+async function chargerEvenements() {
+    const res = await fetch(`${api}/api/events`, { credentials: 'include' });
+    const events = await res.json();
+    const daysContainer = document.getElementById('calendarDays');
+    daysContainer.innerHTML = '';
+
+    // Pour l'exemple on affiche juste les jours du mois avec events
+    for (let i = 1; i <= 30; i++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'day-cell';
+        dayDiv.innerHTML = `<div class="day-number">${i}</div>`;
+        const jour = `2025-06-${String(i).padStart(2, '0')}`;
+
+        const eventsToday = events.filter(e => e.date === jour);
+        eventsToday.forEach(evt => {
+            const evtDiv = document.createElement('div');
+            evtDiv.className = `event ${evt.category}`;
+            evtDiv.textContent = evt.title;
+            dayDiv.appendChild(evtDiv);
+        });
+
+        daysContainer.appendChild(dayDiv);
     }
-
-    container.appendChild(div);
-  });
 }
 
-async function createEvent() {
-  const title = document.getElementById("title").value;
-  const date = document.getElementById("date").value;
-  const description = document.getElementById("description").value;
-  const res = await fetch(`${backendUrl}/api/events`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, date, description, user: userId })
-  });
-  const result = await res.json();
-  alert(result.message || result.error);
-  fetchEvents();
+function openAddEventModal() {
+    document.getElementById('addEventModal').style.display = 'flex';
 }
 
-async function validateEvent(id) {
-  await fetch(`${backendUrl}/api/events/${id}/validate`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user: userId })
-  });
-  fetchEvents();
+function closeAddEventModal() {
+    document.getElementById('addEventModal').style.display = 'none';
 }
 
-async function deleteEvent(id) {
-  await fetch(`${backendUrl}/api/events/${id}`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user: userId })
-  });
-  fetchEvents();
-}
+async function addEvent() {
+    const event = {
+        title: document.getElementById('eventTitle').value,
+        date: document.getElementById('eventDate').value,
+        time: document.getElementById('eventTime').value,
+        category: document.getElementById('eventCategory').value,
+        description: document.getElementById('eventDescription').value
+    };
 
-window.onload = init;
+    const res = await fetch(`${api}/api/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(event)
+    });
+
+    if (res.ok) {
+        closeAddEventModal();
+        chargerEvenements();
+    } else {
+        alert("Erreur lors de l'ajout de l'événement !");
+    }
+}
