@@ -1,0 +1,110 @@
+/* ---------------- Reset minimal ---------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  background-color: #202225;
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  padding: 20px;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* --------------- Header / User Info ------------- */
+header {
+  max-width: 900px;
+  margin: 0 auto 20px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#user-info img {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+}
+.badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #5865f2;
+  font-size: 0.9rem;
+  margin-left: 8px;
+}
+
+/* ---------------- Calendrier ------------------- */
+.calendar {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.header-cal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #2c2f33;
+}
+.day {
+  border: 1px solid #444;
+  padding: 8px;
+  min-height: 80px;
+  position: relative;
+}
+.day strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* --------------- Événements ------------------- */
+.event {
+  background: #7289da;
+  padding: 2px 4px;
+  margin-top: 4px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+}
+.event span {
+  margin-left: 4px;
+  font-size: 0.75rem;
+}
+.event button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.8rem;
+  margin-left: 4px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.event button:hover {
+  color: #ffd700;
+}
+
+/* --------------- Boutons généraux -------------- */
+button {
+  background: #5865f2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover {
+  background: #4752c4;
+}
