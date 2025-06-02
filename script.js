@@ -22,7 +22,6 @@
     if (window.location.hash.includes('access_token=')) {
       const { access_token } = parseHash(window.location.hash);
       history.replaceState(null, '', window.location.pathname);
-
       try {
         const res = await fetch('https://discord.com/api/users/@me', {
           headers: { Authorization: `Bearer ${access_token}` }
@@ -155,31 +154,25 @@
     const calendarEl = document.getElementById('calendar-days');
     const headerEl   = document.getElementById('month-year');
     if (!calendarEl || !headerEl) return;
-
     const date = new Date(curYear, curMonth);
     const monthName = date.toLocaleString('default', { month: 'long' });
     headerEl.textContent = `${monthName} ${curYear}`;
-
     const firstDay  = new Date(curYear, curMonth, 1).getDay();
     const totalDays = new Date(curYear, curMonth + 1, 0).getDate();
-
     calendarEl.innerHTML = '';
     for (let i = 0; i < firstDay; i++) {
       const empty = document.createElement('div');
       empty.className = 'day';
       calendarEl.appendChild(empty);
     }
-
     const monthStr = `${curYear}-${String(curMonth + 1).padStart(2, '0')}`;
-    const events = await loadEvents(monthStr);
-
+    const events   = await loadEvents(monthStr);
     for (let d = 1; d <= totalDays; d++) {
       const fullDate = `${curYear}-${String(curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const cell = document.createElement('div');
       cell.className = 'day';
       cell.dataset.date = fullDate;
       cell.innerHTML = `<strong>${d}</strong>`;
-
       if (currentUser && (currentUser.role === 'creator' || currentUser.role === 'admin')) {
         const btnAdd = document.createElement('button');
         btnAdd.textContent = '+';
@@ -191,7 +184,6 @@
         };
         cell.appendChild(btnAdd);
       }
-
       const dayEvents = events.filter(e => e.date === fullDate);
       dayEvents.forEach(e => {
         const evDiv = document.createElement('div');
@@ -215,7 +207,6 @@
         }
         cell.appendChild(evDiv);
       });
-
       calendarEl.appendChild(cell);
     }
   }
