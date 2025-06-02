@@ -1,4 +1,4 @@
-/* Reset minimal */
+
 * {
   margin: 0;
   padding: 0;
@@ -15,7 +15,6 @@ h1 {
   margin-bottom: 10px;
 }
 
-/* Header / User Info */
 header {
   max-width: 900px;
   margin: 0 auto 20px;
@@ -41,12 +40,10 @@ header {
   margin-left: 8px;
 }
 
-/* Bouton "Login" */
 #login-btn {
   background-color: #7289da;
 }
 
-/* Calendrier */
 .calendar {
   max-width: 900px;
   margin: 0 auto;
@@ -100,7 +97,6 @@ header {
   color: #ffd700;
 }
 
-/* Boutons généraux */
 button {
   background: #5865f2;
   color: white;
