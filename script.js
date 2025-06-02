@@ -1,7 +1,5 @@
-
 (() => {
-  const apiURL = 'http://fnode1.astrast.host:9467';
-
+  const apiURL = 'https://fnode1.astrast.host:9467';
   const CLIENT_ID    = '1378637692169879632';
   const REDIRECT_URI = 'https://modo-de-sipho.github.io/waythes-calendrier/';
   const SCOPE        = 'identify%20email';
@@ -11,36 +9,56 @@
   let curYear  = today.getFullYear();
   let curMonth = today.getMonth();
 
-  function getQueryParams() {
-    const qs = window.location.search.slice(1);
-    return Object.fromEntries(qs
-      .split('&')
-      .map(s => s.split('=').map(decodeURIComponent))
-      .map(([k,v]) => [k, v])
-    );
+  function parseHash(hash) {
+    const params = {};
+    hash.substring(1).split('&').forEach(pair => {
+      const [k, v] = pair.split('=');
+      params[k] = v;
+    });
+    return params;
   }
-  function clearQueryString() {
-    history.replaceState(null, '', window.location.pathname);
-  }
-  function initUserFromQueryOrStorage() {
-    const params = getQueryParams();
-    if (params.id && params.username && params.role) {
-      currentUser = {
-        id:       params.id,
-        username: params.username,
-        avatar:   params.avatar || null,
-        role:     params.role
-      };
-      localStorage.setItem('wc_user', JSON.stringify(currentUser));
-      clearQueryString();
-    } else {
-      const stored = localStorage.getItem('wc_user');
-      if (stored) {
-        try {
-          currentUser = JSON.parse(stored);
-        } catch {
-          currentUser = null;
+
+  async function handleDiscordRedirect() {
+    if (window.location.hash.includes('access_token=')) {
+      const { access_token } = parseHash(window.location.hash);
+      history.replaceState(null, '', window.location.pathname);
+
+      try {
+        const res = await fetch('https://discord.com/api/users/@me', {
+          headers: { Authorization: `Bearer ${access_token}` }
+        });
+        if (!res.ok) throw new Error();
+        const discordUser = await res.json();
+        currentUser = {
+          id:            discordUser.id,
+          username:      discordUser.username + '#' + discordUser.discriminator,
+          avatar:        discordUser.avatar,
+          email:         discordUser.email,
+          role:          'visitor'
+        };
+        const saveRes = await fetch(`${apiURL}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentUser)
+        });
+        if (saveRes.ok) {
+          const data = await saveRes.json();
+          currentUser = data.user;
+          localStorage.setItem('wc_user', JSON.stringify(currentUser));
         }
+      } catch {
+        alert('Échec de la connexion Discord.');
+      }
+    }
+  }
+
+  function initUserFromStorage() {
+    const raw = localStorage.getItem('wc_user');
+    if (raw) {
+      try {
+        currentUser = JSON.parse(raw);
+      } catch {
+        currentUser = null;
       }
     }
   }
@@ -48,14 +66,12 @@
   function renderUserInfo() {
     const container = document.getElementById('user-info');
     if (!currentUser) {
-      container.innerHTML = `
-        <button id="login-btn">Se connecter avec Discord</button>
-      `;
+      container.innerHTML = `<button id="login-btn">Se connecter avec Discord</button>`;
       document.getElementById('login-btn').onclick = () => {
         const url =
           `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}` +
           `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-          `&response_type=code` +
+          `&response_type=token` +
           `&scope=${SCOPE}`;
         window.location.href = url;
       };
@@ -102,7 +118,7 @@
   }
 
   async function createEvent(date, title) {
-    const res = await apiFetch(`/events`, {
+    const res = await apiFetch('/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date, title })
@@ -154,11 +170,11 @@
       calendarEl.appendChild(empty);
     }
 
-    const monthStr = `${curYear}-${String(curMonth + 1).padStart(2,'0')}`;
-    const events   = await loadEvents(monthStr);
+    const monthStr = `${curYear}-${String(curMonth + 1).padStart(2, '0')}`;
+    const events = await loadEvents(monthStr);
 
     for (let d = 1; d <= totalDays; d++) {
-      const fullDate = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const fullDate = `${curYear}-${String(curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const cell = document.createElement('div');
       cell.className = 'day';
       cell.dataset.date = fullDate;
@@ -170,7 +186,7 @@
         btnAdd.style.fontSize  = '0.8rem';
         btnAdd.style.marginTop = '4px';
         btnAdd.onclick = () => {
-          const title = prompt(`Titre de l’événement pour ${fullDate} :`);
+          const title = prompt(`Titre de l’événement pour le ${fullDate} :`);
           if (title) createEvent(fullDate, title);
         };
         cell.appendChild(btnAdd);
@@ -203,6 +219,7 @@
       calendarEl.appendChild(cell);
     }
   }
+
   function changeMonth(delta) {
     curMonth += delta;
     if (curMonth < 0) {
@@ -214,8 +231,10 @@
     }
     renderCalendar();
   }
-  window.addEventListener('DOMContentLoaded', () => {
-    initUserFromQueryOrStorage();
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    initUserFromStorage();
+    await handleDiscordRedirect();
     renderUserInfo();
     renderCalendar();
   });
