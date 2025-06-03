@@ -4,21 +4,24 @@
   box-sizing: border-box;
 }
 body {
-  background-color: #202225;
-  color: #fff;
-  font-family: 'Segoe UI', sans-serif;
-  padding: 20px;
-}
-h1 {
-  text-align: center;
-  margin-bottom: 10px;
+  background: linear-gradient(135deg, #7289da, #99aab5);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #2c2f33;
 }
 header {
+  width: 100%;
   max-width: 900px;
-  margin: 0 auto 20px;
+  margin: 20px auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+h1 {
+  font-size: 2rem;
 }
 #user-info {
   display: flex;
@@ -31,45 +34,68 @@ header {
   height: 40px;
 }
 .badge {
+  background: #5865f2;
+  color: #fff;
   padding: 2px 6px;
   border-radius: 4px;
-  background: #5865f2;
   font-size: 0.9rem;
-  margin-left: 8px;
+}
+button {
+  background: #5865f2;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+button:hover {
+  background: #4752c4;
 }
 .calendar {
+  width: 100%;
   max-width: 900px;
-  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  margin-bottom: 40px;
 }
 .header-cal {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  background: #2c2f33;
+  color: #fff;
+  padding: 16px;
+}
+.header-cal h2 {
+  font-size: 1.5rem;
 }
 .days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background-color: #2c2f33;
+  background-color: #f0f0f0;
 }
 .day {
-  border: 1px solid #444;
-  padding: 8px;
-  min-height: 80px;
+  border: 1px solid #ddd;
+  min-height: 100px;
   position: relative;
+  padding: 8px;
+  background: #fafafa;
 }
 .day strong {
-  display: block;
-  margin-bottom: 4px;
+  font-size: 1rem;
 }
 .event {
-  background: #7289da;
-  padding: 2px 4px;
-  margin-top: 4px;
-  border-radius: 4px;
-  font-size: 0.8rem;
   display: flex;
   align-items: center;
+  background: #7289da;
+  color: #fff;
+  padding: 4px 6px;
+  border-radius: 4px;
+  margin-top: 6px;
+  font-size: 0.85rem;
 }
 .event.pending {
   background: #faa61a;
@@ -80,28 +106,9 @@ header {
 }
 .event button {
   background: transparent;
-  border: none;
-  color: #fff;
+  margin-left: 6px;
   font-size: 0.8rem;
-  margin-left: 4px;
-  cursor: pointer;
-  transition: color 0.2s;
 }
 .event button:hover {
   color: #ffd700;
-}
-button {
-  background: #5865f2;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-button:hover {
-  background: #4752c4;
-}
-#login-btn {
-  background-color: #7289da;
 }
