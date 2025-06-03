@@ -1,22 +1,18 @@
-
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 body {
   background-color: #202225;
   color: #fff;
   font-family: 'Segoe UI', sans-serif;
   padding: 20px;
 }
-
 h1 {
   text-align: center;
   margin-bottom: 10px;
 }
-
 header {
   max-width: 900px;
   margin: 0 auto 20px;
@@ -24,19 +20,16 @@ header {
   justify-content: space-between;
   align-items: center;
 }
-
 #user-info {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 #user-info img {
   border-radius: 50%;
   width: 40px;
   height: 40px;
 }
-
 .badge {
   padding: 2px 6px;
   border-radius: 4px;
@@ -44,62 +37,31 @@ header {
   font-size: 0.9rem;
   margin-left: 8px;
 }
-
-/* LOGIN */
-#login-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-#login-form {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-#login-form input {
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background: #2c2f33;
-  color: #fff;
-  font-size: 0.9rem;
-}
-
 .calendar {
   max-width: 900px;
   margin: 0 auto;
 }
-
 .header-cal {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
 }
-
-/* DAYS GRID */
 .days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   background-color: #2c2f33;
 }
-
 .day {
   border: 1px solid #444;
   padding: 8px;
   min-height: 80px;
   position: relative;
 }
-
 .day strong {
   display: block;
   margin-bottom: 4px;
 }
-
-/* EVENTS */
 .event {
   background: #7289da;
   padding: 2px 4px;
@@ -109,16 +71,13 @@ header {
   display: flex;
   align-items: center;
 }
-
 .event.pending {
   background: #faa61a;
 }
-
 .event span {
   margin-left: 4px;
   font-size: 0.75rem;
 }
-
 .event button {
   background: transparent;
   border: none;
@@ -128,11 +87,9 @@ header {
   cursor: pointer;
   transition: color 0.2s;
 }
-
 .event button:hover {
   color: #ffd700;
 }
-
 button {
   background: #5865f2;
   color: white;
@@ -142,40 +99,9 @@ button {
   cursor: pointer;
   transition: background 0.2s;
 }
-
 button:hover {
   background: #4752c4;
 }
-
 #login-btn {
   background-color: #7289da;
-}
-
-.status-indicator {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  z-index: 1000;
-}
-
-.status-online {
-  background: #43b581;
-}
-
-.status-offline {
-  background: #f04747;
-}
-
-.mode-toggle {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  z-index: 1000;
-  cursor: pointer;
 }
