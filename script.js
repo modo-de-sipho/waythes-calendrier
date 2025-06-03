@@ -28,27 +28,49 @@
     return null;
   }
 
-  function parseQuery(queryString) {
+  function parseHash(hashString) {
     const params = {};
-    queryString.substring(1).split('&').forEach(pair => {
-      const [k, v] = pair.split('=');
-      params[k] = decodeURIComponent(v);
-    });
+    hashString
+      .substring(1)
+      .split('&')
+      .forEach(pair => {
+        const [k, v] = pair.split('=');
+        params[k] = decodeURIComponent(v);
+      });
     return params;
   }
 
   async function handleDiscordRedirect() {
-    const params = parseQuery(window.location.search);
-    const code = params.code;
-    if (code) {
+    // On attend un fragment #access_token=... dans URL
+    if (window.location.hash.includes('access_token=')) {
+      const params = parseHash(window.location.hash);
+      const accessToken = params.access_token;
+      // On nettoie le hash de l'URL
       history.replaceState(null, '', window.location.pathname);
+
       try {
-        const res = await fetch(`${API_BASE}/callback?code=${encodeURIComponent(code)}`);
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || `HTTP ${res.status}`);
-        }
-        const data = await res.json();
+        // Récupération des infos utilisateur depuis Discord
+        const userRes = await fetch('https://discord.com/api/users/@me', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!userRes.ok) throw new Error('Discord API error');
+        const du = await userRes.json();
+        const newUser = {
+          id: du.id,
+          username: `${du.username}#${du.discriminator}`,
+          avatar: du.avatar,
+          email: du.email,
+          role: 'visitor'
+        };
+
+        // Enregistrement / mise à jour sur ton backend
+        const regRes = await fetch(`${API_BASE}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newUser)
+        });
+        if (!regRes.ok) throw new Error('Erreur save user backend');
+        const data = await regRes.json();
         currentUser = {
           id: data.user.id,
           username: data.user.username,
@@ -75,8 +97,9 @@
       btn.textContent = 'Se connecter avec Discord';
       btn.onclick = () => {
         window.location.href =
-          `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}` +
-          `&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+          `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}` +
+          `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+          `&response_type=token` +
           `&scope=${encodeURIComponent(SCOPE)}`;
       };
       container.appendChild(btn);
@@ -208,7 +231,7 @@
 
     const firstDay = new Date(curYear, curMonth, 1).getDay();
     const offset   = firstDay === 0 ? 6 : firstDay - 1;
-    const totalDays = new Date(curYear, curMonth + 1, 0).getDate();
+    const totalDays= new Date(curYear, curMonth + 1, 0).getDate();
 
     container.innerHTML = '';
     const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
