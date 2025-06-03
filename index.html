@@ -2,15 +2,19 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Waythes Calendrier</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="status-indicator" class="status-indicator status-offline">Mode Local</div>
+  <button id="mode-toggle" class="mode-toggle">Basculer vers Backend</button>
+  
   <header>
     <h1>📅 Waythes Calendrier</h1>
     <div id="user-info"></div>
   </header>
+
   <main class="calendar">
     <div class="header-cal">
       <button onclick="changeMonth(-1)">← Mois préc.</button>
@@ -19,6 +23,7 @@
     </div>
     <div class="days" id="calendar-days"></div>
   </main>
-  <script src="script.js"></script>
+
+  <script src="app.js"></script>
 </body>
 </html>
