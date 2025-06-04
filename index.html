@@ -2,24 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Waythes Calendrier</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   <header>
-    <h1>📅 Waythes Calendrier</h1>
+    <h1>Waythes Calendrier</h1>
     <div id="user-info"></div>
   </header>
 
-  <main class="calendar">
+  <div class="calendar">
     <div class="header-cal">
-      <button onclick="changeMonth(-1)">← Mois préc.</button>
-      <h2 id="month-year"></h2>
-      <button onclick="changeMonth(1)">Mois suiv. →</button>
+      <button id="prev-month">← Mois préc.</button>
+      <h2 id="month-year">Mois Année</h2>
+      <button id="next-month">Mois suiv. →</button>
     </div>
-    <div class="days" id="calendar-days"></div>
-  </main>
+    <div id="calendar-days" class="days">
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
