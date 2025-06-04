@@ -1,319 +1,241 @@
-(() => {
-  const API_BASE     = 'https://fnode1.astrast.host:7172';
-  const CLIENT_ID    = '1378637692169879632';
-  const REDIRECT_URI = 'https://fnode1.astrast.host:7172/callback';
-  const SCOPE        = 'identify email';
+const SUPABASE_URL = "https://fmzdijfbopwsionscrxn.supabase.co";       
+const SUPABASE_KEY = "YOUR_ANON_KEY";                               
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  let currentUser = null;
-  let curYear, curMonth;
+const CLIENT_ID    = "1378637692169879632";
+const REDIRECT_URI = window.location.origin + window.location.pathname; // redirige vers la même page
+const SCOPE        = "identify email";
 
-  const today = new Date();
-  curYear  = today.getFullYear();
-  curMonth = today.getMonth();
+let currentUser = null;
+let curYear, curMonth;
+const today = new Date();
+curYear  = today.getFullYear();
+curMonth = today.getMonth();
 
-  function saveUserLocally(user) {
-    if (user) sessionStorage.setItem('wc_user', JSON.stringify(user));
-    else sessionStorage.removeItem('wc_user');
-  }
+// Parse le fragment de l’URL (après #) en objet { access_token: "...", ... }
+function parseHash(hashString) {
+  const params = {};
+  hashString
+    .substring(1)
+    .split("&")
+    .forEach(pair => {
+      const [k, v] = pair.split("=");
+      params[k] = decodeURIComponent(v);
+    });
+  return params;
+}
 
-  function loadUserLocally() {
-    const raw = sessionStorage.getItem('wc_user');
-    if (raw) {
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
+async function handleDiscordRedirect() {
+  // Si on a un #access_token=xxxxx dans l’URL
+  if (window.location.hash.includes("access_token=")) {
+    const params = parseHash(window.location.hash);
+    const accessToken = params.access_token;
+    // Clean l’URL
+    history.replaceState(null, "", window.location.pathname);
 
-  function parseHash(hashString) {
-    const params = {};
-    hashString
-      .substring(1)
-      .split('&')
-      .forEach(pair => {
-        const [k, v] = pair.split('=');
-        params[k] = decodeURIComponent(v);
+    try {
+      // Appel à l’API Discord pour récupérer l’utilisateur
+      const userRes = await fetch("https://discord.com/api/users/@me", {
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-    return params;
-  }
-
-  async function handleDiscordRedirect() {
-    // On attend un fragment #access_token=... dans URL
-    if (window.location.hash.includes('access_token=')) {
-      const params = parseHash(window.location.hash);
-      const accessToken = params.access_token;
-      // On nettoie le hash de l'URL
-      history.replaceState(null, '', window.location.pathname);
-
-      try {
-        // Récupération des infos utilisateur depuis Discord
-        const userRes = await fetch('https://discord.com/api/users/@me', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (!userRes.ok) throw new Error('Discord API error');
-        const du = await userRes.json();
-        const newUser = {
-          id: du.id,
-          username: `${du.username}#${du.discriminator}`,
-          avatar: du.avatar,
-          email: du.email,
-          role: 'visitor'
-        };
-
-        // Enregistrement / mise à jour sur ton backend
-        const regRes = await fetch(`${API_BASE}/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newUser)
-        });
-        if (!regRes.ok) throw new Error('Erreur save user backend');
-        const data = await regRes.json();
-        currentUser = {
-          id: data.user.id,
-          username: data.user.username,
-          avatar: data.user.avatar,
-          email: data.user.email,
-          role: data.user.role
-        };
-        saveUserLocally(currentUser);
-        renderUserInfo();
-        renderCalendar();
-      } catch (err) {
-        alert('Échec connexion Discord : ' + err.message);
-      }
-    }
-  }
-
-  function renderUserInfo() {
-    const container = document.getElementById('user-info');
-    container.innerHTML = '';
-
-    if (!currentUser) {
-      const btn = document.createElement('button');
-      btn.id = 'login-btn';
-      btn.textContent = 'Se connecter avec Discord';
-      btn.onclick = () => {
-        window.location.href =
-          `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}` +
-          `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-          `&response_type=token` +
-          `&scope=${encodeURIComponent(SCOPE)}`;
+      if (!userRes.ok) throw new Error("Erreur API Discord");
+      const du = await userRes.json();
+      // Construction de l’objet utilisateur
+      const newUser = {
+        id: du.id,
+        username: `${du.username}#${du.discriminator}`,
+        avatar: du.avatar,
+        email: du.email,
+        role: "visitor",
       };
-      container.appendChild(btn);
-      return;
-    }
 
-    const avatarUrl = currentUser.avatar
-      ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`
-      : 'https://cdn.discordapp.com/embed/avatars/0.png';
+      // Upsert (insert ou update) dans Supabase
+      const { data, error } = await supabase
+        .from("users")
+        .upsert(newUser, { onConflict: "id" })
+        .select()
+        .single();
 
-    const img = document.createElement('img');
-    img.src = avatarUrl;
-    img.alt = 'Avatar';
-
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = currentUser.username;
-
-    const badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.textContent = currentUser.role;
-
-    const logoutBtn = document.createElement('button');
-    logoutBtn.textContent = 'Déconnexion';
-    logoutBtn.onclick = () => {
-      currentUser = null;
-      saveUserLocally(null);
+      if (error) throw error;
+      currentUser = data;
       renderUserInfo();
       renderCalendar();
+    } catch (err) {
+      alert("Échec connexion Discord : " + err.message);
+    }
+  }
+}
+
+function renderUserInfo() {
+  const container = document.getElementById("user-info");
+  container.innerHTML = "";
+
+  if (!currentUser) {
+    // Si pas connecté, on affiche un bouton "Se connecter"
+    const btn = document.createElement("button");
+    btn.textContent = "Se connecter avec Discord";
+    btn.onclick = () => {
+      window.location.href =
+        `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}` +
+        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        `&response_type=token` +
+        `&scope=${encodeURIComponent(SCOPE)}`;
     };
-
-    const wrapper = document.createElement('div');
-    wrapper.style.display = 'flex';
-    wrapper.style.alignItems = 'center';
-    wrapper.style.gap = '8px';
-    wrapper.append(img, nameSpan, badge, logoutBtn);
-
-    container.appendChild(wrapper);
+    container.appendChild(btn);
+    return;
   }
+  const avatarUrl = currentUser.avatar
+    ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`
+    : "https://cdn.discordapp.com/embed/avatars/0.png";
 
-  async function fetchEventsBackend(monthStr) {
-    try {
-      const res = await fetch(`${API_BASE}/events?month=${monthStr}`, {
-        headers: {
-          'X-User-Id': currentUser.id,
-          'X-User-Role': currentUser.role
-        }
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || `HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      return data.events;
-    } catch {
-      return [];
-    }
-  }
+  const img = document.createElement("img");
+  img.src = avatarUrl;
+  img.alt = "Avatar";
 
-  async function createEvent(date, title) {
-    if (!currentUser) return;
-    if (currentUser.role === 'creator' || currentUser.role === 'admin') {
-      try {
-        const res = await fetch(`${API_BASE}/events`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': currentUser.id,
-            'X-User-Role': currentUser.role
-          },
-          body: JSON.stringify({ date, title })
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || `HTTP ${res.status}`);
-        }
-        await renderCalendar();
-      } catch (e) {
-        alert('Erreur backend : ' + e.message);
-      }
-    }
-  }
+  const nameSpan = document.createElement("span");
+  nameSpan.textContent = currentUser.username;
 
-  async function validateEvent(id) {
-    if (!currentUser || currentUser.role !== 'admin') return;
-    try {
-      const res = await fetch(`${API_BASE}/events/validate/${id}`, {
-        method: 'POST',
-        headers: {
-          'X-User-Id': currentUser.id,
-          'X-User-Role': currentUser.role
-        }
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || `HTTP ${res.status}`);
-      }
-      await renderCalendar();
-    } catch {
-      alert('Erreur validation backend');
-    }
-  }
+  const badge = document.createElement("span");
+  badge.className = "badge";
+  badge.textContent = currentUser.role;
 
-  async function deleteEvent(id) {
-    if (!currentUser || currentUser.role !== 'admin') return;
-    try {
-      const res = await fetch(`${API_BASE}/events/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'X-User-Id': currentUser.id,
-          'X-User-Role': currentUser.role
-        }
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || `HTTP ${res.status}`);
-      }
-      await renderCalendar();
-    } catch {
-      alert('Erreur suppression backend');
-    }
-  }
-
-  async function renderCalendar() {
-    const container = document.getElementById('calendar-days');
-    const headerEl  = document.getElementById('month-year');
-    const date      = new Date(curYear, curMonth);
-    const monthName = date.toLocaleString('fr-FR', { month: 'long' });
-    headerEl.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${curYear}`;
-
-    const firstDay = new Date(curYear, curMonth, 1).getDay();
-    const offset   = firstDay === 0 ? 6 : firstDay - 1;
-    const totalDays= new Date(curYear, curMonth + 1, 0).getDate();
-
-    container.innerHTML = '';
-    const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-    dayNames.forEach(dn => {
-      const header = document.createElement('div');
-      header.style.cssText = 'padding:8px;text-align:center;font-weight:bold;background:#36393f;color:#fff;border:1px solid #444;';
-      header.textContent = dn;
-      container.appendChild(header);
-    });
-
-    for (let i = 0; i < offset; i++) {
-      const empty = document.createElement('div');
-      empty.className = 'day';
-      container.appendChild(empty);
-    }
-
-    const monthStr = `${curYear}-${String(curMonth + 1).padStart(2, '0')}`;
-    const events   = currentUser ? await fetchEventsBackend(monthStr) : [];
-
-    for (let d = 1; d <= totalDays; d++) {
-      const fullDate = `${curYear}-${String(curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const cell     = document.createElement('div');
-      cell.className = 'day';
-      cell.dataset.date = fullDate;
-      cell.innerHTML = `<strong>${d}</strong>`;
-
-      if (currentUser && (currentUser.role === 'creator' || currentUser.role === 'admin')) {
-        const btnAdd = document.createElement('button');
-        btnAdd.textContent = '+';
-        btnAdd.style.fontSize = '0.8rem';
-        btnAdd.style.marginTop = '6px';
-        btnAdd.onclick = () => {
-          const title = prompt(`Titre événement pour ${fullDate} :`);
-          if (title && title.trim()) createEvent(fullDate, title.trim());
-        };
-        cell.appendChild(btnAdd);
-      }
-
-      events.filter(e => e.date === fullDate).forEach(e => {
-        const evDiv = document.createElement('div');
-        evDiv.className = e.validated ? 'event' : 'event pending';
-        evDiv.innerHTML = e.title + (!e.validated ? `<span> (⏳)</span>` : '');
-
-        if (currentUser && currentUser.role === 'admin') {
-          if (!e.validated) {
-            const btnVal = document.createElement('button');
-            btnVal.textContent = '✔';
-            btnVal.onclick = () => validateEvent(e.id);
-            evDiv.appendChild(btnVal);
-          }
-          const btnDel = document.createElement('button');
-          btnDel.textContent = '✖';
-          btnDel.onclick = () => {
-            if (confirm('Supprimer cet événement ?')) deleteEvent(e.id);
-          };
-          evDiv.appendChild(btnDel);
-        }
-        cell.appendChild(evDiv);
-      });
-
-      container.appendChild(cell);
-    }
-  }
-
-  function changeMonth(delta) {
-    curMonth += delta;
-    if (curMonth < 0) {
-      curMonth = 11;
-      curYear--;
-    } else if (curMonth > 11) {
-      curMonth = 0;
-      curYear++;
-    }
-    renderCalendar();
-  }
-
-  window.addEventListener('DOMContentLoaded', async () => {
-    currentUser = loadUserLocally();
-    await handleDiscordRedirect();
+  const logoutBtn = document.createElement("button");
+  logoutBtn.textContent = "Déconnexion";
+  logoutBtn.onclick = () => {
+    currentUser = null;
     renderUserInfo();
     renderCalendar();
+  };
+
+  const wrapper = document.createElement("div");
+  wrapper.style.display = "flex";
+  wrapper.style.alignItems = "center";
+  wrapper.style.gap = "8px";
+  wrapper.append(img, nameSpan, badge, logoutBtn);
+
+  container.appendChild(wrapper);
+}
+
+async function fetchEventsBackend(monthStr) {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("date", monthStr + ""); // on match par date (YYYY-MM-DD) si besoin
+  return error ? [] : data;
+}
+
+async function createEvent(date, title) {
+  if (!currentUser || !["creator", "admin"].includes(currentUser.role)) return;
+  await supabase.from("events").insert([{ user_id: currentUser.id, date, title, validated: false }]);
+  renderCalendar();
+}
+
+async function validateEvent(id) {
+  if (!currentUser || currentUser.role !== "admin") return;
+  await supabase.from("events").update({ validated: true }).eq("id", id);
+  renderCalendar();
+}
+
+async function deleteEvent(id) {
+  if (!currentUser || currentUser.role !== "admin") return;
+  await supabase.from("events").delete().eq("id", id);
+  renderCalendar();
+}
+
+async function renderCalendar() {
+  const container = document.getElementById("calendar-days");
+  const headerEl  = document.getElementById("month-year");
+  const date      = new Date(curYear, curMonth);
+  const monthName = date.toLocaleString("fr-FR", { month: "long" });
+  headerEl.textContent = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${curYear}`;
+
+  const firstDay = new Date(curYear, curMonth, 1).getDay();
+  const offset   = firstDay === 0 ? 6 : firstDay - 1;
+  const totalDays= new Date(curYear, curMonth + 1, 0).getDate();
+
+  container.innerHTML = "";
+  // En-têtes des jours
+  const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  dayNames.forEach(dn => {
+    const header = document.createElement("div");
+    header.textContent = dn;
+    header.className = "day header";
+    container.appendChild(header);
   });
 
-  window.changeMonth = changeMonth;
-})();
+  for (let i = 0; i < offset; i++) {
+    const empty = document.createElement("div");
+    empty.className = "day";
+    container.appendChild(empty);
+  }
+
+  const monthStr = `${curYear}-${String(curMonth + 1).padStart(2, "0")}`;
+  const events   = await fetchEventsBackend(monthStr);
+
+  for (let d = 1; d <= totalDays; d++) {
+    const fullDate = `${monthStr}-${String(d).padStart(2, "0")}`;
+    const cell     = document.createElement("div");
+    cell.className = "day";
+    cell.dataset.date = fullDate;
+    cell.innerHTML = `<strong>${d}</strong>`;
+
+    if (currentUser && ["creator", "admin"].includes(currentUser.role)) {
+      const btn = document.createElement("button");
+      btn.textContent = "+";
+      btn.style.fontSize = "0.8rem";
+      btn.style.marginTop = "6px";
+      btn.onclick = () => {
+        const title = prompt(`Titre de l'événement pour ${fullDate} :`);
+        if (title && title.trim()) createEvent(fullDate, title.trim());
+      };
+      cell.appendChild(btn);
+    }
+    events.filter(e => e.date === fullDate).forEach(e => {
+      const evDiv = document.createElement("div");
+      evDiv.className = e.validated ? "event" : "event pending";
+      evDiv.innerHTML = e.title + (e.validated ? "" : `<span> (⏳)</span>`);
+
+      if (currentUser && currentUser.role === "admin") {
+        if (!e.validated) {
+          const btnVal = document.createElement("button");
+          btnVal.textContent = "✔";
+          btnVal.onclick = () => validateEvent(e.id);
+          evDiv.appendChild(btnVal);
+        }
+        // Bouton supprimer
+        const btnDel = document.createElement("button");
+        btnDel.textContent = "✖";
+        btnDel.onclick = () => {
+          if (confirm(`Supprimer cet événement ?`)) deleteEvent(e.id);
+        };
+        evDiv.appendChild(btnDel);
+      }
+
+      cell.appendChild(evDiv);
+    });
+
+    container.appendChild(cell);
+  }
+}
+
+document.getElementById("prev-month").onclick = () => {
+  curMonth--;
+  if (curMonth < 0) {
+    curMonth = 11;
+    curYear--;
+  }
+  renderCalendar();
+};
+document.getElementById("next-month").onclick = () => {
+  curMonth++;
+  if (curMonth > 11) {
+    curMonth = 0;
+    curYear++;
+  }
+  renderCalendar();
+};
+window.addEventListener("DOMContentLoaded", async () => {
+  await handleDiscordRedirect();
+  renderUserInfo();
+  renderCalendar();
+});
