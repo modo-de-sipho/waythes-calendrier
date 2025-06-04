@@ -188,7 +188,7 @@ async function renderCalendar() {
   const monthStr = `${curYear}-${String(curMonth + 1).padStart(2, "0")}`;
   const events   = await fetchEventsBackend(monthStr);
   for (let d = 1; d <= totalDays; d++) {
-    const fullDate = `${monthStr}-${String(d).padStart(2, "0")}`;
+    const fullDate = `${monthStr}-${String(d).padStart(2, "00")}`;
     const cell     = document.createElement("div");
     cell.className = "day";
     cell.dataset.date = fullDate;
