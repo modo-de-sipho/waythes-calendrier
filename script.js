@@ -1,11 +1,11 @@
-// Configuration - À modifier avec vos vraies valeurs
+
 const CONFIG = {
     DISCORD_CLIENT_ID: '1378637692169879632',
-    REDIRECT_URI: window.location.origin + window.location.pathname,
+    REDIRECT_URI: 'https://modo-de-sipho.github.io/waythes-calendrier/',
     BACKEND_URL: 'http://fnode1.astrast.host:9506'
 };
 
-// État de l'application
+
 class CalendarApp {
     constructor() {
         this.currentUser = null;
@@ -33,26 +33,20 @@ class CalendarApp {
     }
 
     setupEventListeners() {
-        // Authentification
         this.getElement('loginBtn')?.addEventListener('click', () => this.loginWithDiscord());
         this.getElement('logoutBtn')?.addEventListener('click', () => this.logout());
         
-        // Navigation calendrier
         window.previousMonth = () => this.previousMonth();
         window.nextMonth = () => this.nextMonth();
-        
-        // Formulaire d'événement
+
         window.submitEvent = () => this.submitEvent();
         window.hideEventForm = () => this.hideEventForm();
         
-        // Raccourcis clavier
         document.addEventListener('keydown', (e) => this.handleKeydown(e));
         
-        // Responsive
         window.addEventListener('resize', () => this.debounce(() => this.renderCalendar(), 250));
     }
 
-    // Utilitaires
     getElement(id) {
         return document.getElementById(id);
     }
@@ -120,7 +114,6 @@ class CalendarApp {
         setTimeout(() => successDiv.remove(), 3000);
     }
 
-    // Authentification Discord
     loginWithDiscord() {
         const params = new URLSearchParams({
             client_id: CONFIG.DISCORD_CLIENT_ID,
@@ -138,12 +131,12 @@ class CalendarApp {
         
         if (code) {
             await this.exchangeCodeForUser(code);
-            // Nettoyer l'URL
+            
             window.history.replaceState({}, document.title, window.location.pathname);
             return;
         }
         
-        // Vérifier l'utilisateur en mémoire
+        
         const userId = localStorage.getItem('user_id');
         if (userId) {
             await this.verifyUser(userId);
@@ -238,7 +231,7 @@ class CalendarApp {
                 permissionBadge.textContent = this.currentUser.permission_name;
             }
             
-            // Afficher le formulaire pour les modérateurs et admin (niveau 2+)
+            
             if (this.currentUser.permission >= 2) {
                 eventForm?.classList.remove('hidden');
             }
@@ -249,7 +242,7 @@ class CalendarApp {
         }
     }
 
-    // Gestion du calendrier
+    
     renderCalendar() {
         const calendar = this.getElement('calendar');
         const monthYear = this.getElement('currentMonth');
@@ -268,13 +261,11 @@ class CalendarApp {
         const lastDay = new Date(year, month + 1, 0);
         const startDate = new Date(firstDay);
         
-        // Ajuster au lundi précédent
         const dayOfWeek = (firstDay.getDay() + 6) % 7;
         startDate.setDate(startDate.getDate() - dayOfWeek);
         
         calendar.innerHTML = '';
         
-        // Générer 42 jours (6 semaines)
         for (let i = 0; i < 42; i++) {
             const cellDate = new Date(startDate);
             cellDate.setDate(startDate.getDate() + i);
@@ -302,7 +293,6 @@ class CalendarApp {
         
         dayElement.innerHTML = `<div class="day-number">${cellDate.getDate()}</div>`;
         
-        // Ajouter les événements
         const dayEvents = this.getEventsForDate(cellDate);
         dayEvents.forEach(event => {
             const eventElement = document.createElement('div');
@@ -316,7 +306,6 @@ class CalendarApp {
             dayElement.appendChild(eventElement);
         });
         
-        // Ajouter l'événement de clic pour sélectionner la date
         dayElement.addEventListener('click', () => this.selectDate(cellDate));
         
         return dayElement;
@@ -376,8 +365,7 @@ class CalendarApp {
         `;
         
         document.body.appendChild(modal);
-        
-        // Fermer avec Escape
+    
         const closeModal = (e) => {
             if (e.key === 'Escape' || e.target === modal) {
                 modal.remove();
@@ -403,7 +391,6 @@ class CalendarApp {
         this.renderCalendar();
     }
 
-    // Gestion des événements
     async loadEvents() {
         if (!this.currentUser) return;
         
@@ -446,7 +433,7 @@ class CalendarApp {
             date: dateInput.value,
             time: timeInput.value,
             description: descriptionInput?.value?.trim() || '',
-            permission: 1 // Visible pour tous par défaut
+            permission: 1 
         };
 
         try {
@@ -478,7 +465,7 @@ class CalendarApp {
     }
 
     async editEvent(eventId) {
-        // TODO: Implémenter l'édition d'événement
+        
         console.log('Édition d\'événement:', eventId);
     }
 
@@ -496,7 +483,7 @@ class CalendarApp {
                 this.events = this.events.filter(event => event.id !== eventId);
                 this.renderCalendar();
                 this.showSuccess('Événement supprimé avec succès !');
-                // Fermer la modal si elle est ouverte
+            
                 document.querySelector('.event-modal')?.remove();
             } else {
                 throw new Error(response.error || 'Erreur lors de la suppression');
@@ -527,7 +514,6 @@ class CalendarApp {
         }
     }
 
-    // Gestion des raccourcis clavier
     handleKeydown(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -546,7 +532,6 @@ class CalendarApp {
         }
     }
 
-    // Utilitaire pour les appels API
     async fetchAPI(endpoint, options = {}) {
         const url = `${CONFIG.BACKEND_URL}${endpoint}`;
         
@@ -571,13 +556,11 @@ class CalendarApp {
     }
 }
 
-// Initialisation de l'application
 let app;
 document.addEventListener('DOMContentLoaded', () => {
     app = new CalendarApp();
 });
 
-// Export pour les tests (si nécessaire)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = CalendarApp;
 }
