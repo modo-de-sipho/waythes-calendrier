@@ -3,12 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waythes Calendrier</title>
+    <title>Calendrier Discord</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Calendrier de Waythes</h1>
-    <div id="calendar-container"></div>
-    <script src="app.js"></script>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Calendrier Discord</h1>
+            <div class="login-section">
+                <div id="loginBtn" class="discord-btn">
+                    🎮 Se connecter avec Discord
+                </div>
+                <div id="userInfo" class="user-info hidden">
+                    <img id="userAvatar" width="32" height="32" style="border-radius: 50%;" alt="Avatar">
+                    <div>
+                        <div id="username"></div>
+                        <div id="permissionBadge" class="permission-badge"></div>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-secondary" style="margin-left: 10px;">Déconnexion</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="eventForm" class="event-form hidden">
+            <h3>Proposer un événement</h3>
+            <div class="form-group">
+                <label for="eventTitle">Titre de l'événement</label>
+                <input type="text" id="eventTitle" required>
+            </div>
+            <div class="form-group">
+                <label for="eventDate">Date</label>
+                <input type="date" id="eventDate" required>
+            </div>
+            <div class="form-group">
+                <label for="eventTime">Heure</label>
+                <input type="time" id="eventTime" required>
+            </div>
+            <div class="form-group">
+                <label for="eventDescription">Description</label>
+                <textarea id="eventDescription" rows="3"></textarea>
+            </div>
+            <button class="btn" onclick="submitEvent()">Proposer l'événement</button>
+            <button class="btn btn-secondary" onclick="hideEventForm()">Annuler</button>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button class="nav-btn" onclick="previousMonth()">‹</button>
+                <h2 id="currentMonth"></h2>
+                <button class="nav-btn" onclick="nextMonth()">›</button>
+            </div>
+            <div class="day-names">
+                <div class="day-name">Lun</div>
+                <div class="day-name">Mar</div>
+                <div class="day-name">Mer</div>
+                <div class="day-name">Jeu</div>
+                <div class="day-name">Ven</div>
+                <div class="day-name">Sam</div>
+                <div class="day-name">Dim</div>
+            </div>
+            <div class="calendar-grid" id="calendar"></div>
+        </div>
+
+        <div id="pendingEventsSection" class="pending-events hidden">
+            <h3>Événements en attente de validation</h3>
+            <div id="pendingEventsList"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
