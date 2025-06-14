@@ -1,6 +1,6 @@
 // Configuration - À modifier avec vos vraies valeurs
 const CONFIG = {
-    DISCORD_CLIENT_ID: 'YOUR_DISCORD_CLIENT_ID',
+    DISCORD_CLIENT_ID: '1378637692169879632',
     REDIRECT_URI: window.location.origin + window.location.pathname,
     BACKEND_URL: 'YOUR_BACKEND_URL'
 };
