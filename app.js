@@ -2,7 +2,7 @@
 const CONFIG = {
     DISCORD_CLIENT_ID: '1378637692169879632',
     REDIRECT_URI: window.location.origin + window.location.pathname,
-    BACKEND_URL: 'YOUR_BACKEND_URL'
+    BACKEND_URL: 'http://fnode1.astrast.host:9506'
 };
 
 // État de l'application
